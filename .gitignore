@@ -9,6 +9,7 @@ cpp/jp_table_gen
 *.lst~
 *.bin
 *.bin~
+*.mcu8051ide~
 
 # Prerequisites
 *.d
