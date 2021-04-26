@@ -1,3 +1,15 @@
+# Own stuff:
+cpp/jp_table_gen
+*.adf
+*.adf~
+*.asm~
+*.hex
+*.hex~
+*.lst
+*.lst~
+*.bin
+*.bin~
+
 # Prerequisites
 *.d
 
