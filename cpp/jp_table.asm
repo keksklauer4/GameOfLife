@@ -1,6 +1,6 @@
 ; Huge jump table to enable fast random access in external RAM.
 
-cseg at 500
+cseg at 4000h
 l_jp_table:
 
 ; destination for A = 0:
@@ -1282,3 +1282,4 @@ l_jp_table:
    MOV DPTR, #255
    RET
 
+END

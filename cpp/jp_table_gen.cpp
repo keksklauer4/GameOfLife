@@ -18,5 +18,7 @@ int main()
     file << "   RET" << std::endl << std::endl;
   }
 
+  file << std::endl << std::endl << "END" << std::endl;
+
   file.close();
 }
