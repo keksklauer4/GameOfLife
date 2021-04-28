@@ -5,6 +5,11 @@
 int main()
 {
   std::ofstream file("jp_table.asm");
+
+  file << ";" << std::endl
+       << "; Created by keksklauer4 - 26.04.2021" << std::endl
+       << ";" << std::endl << std::endl;
+
   file << "; Huge jump table to enable fast random access in external RAM." << std::endl
        << std::endl;
 

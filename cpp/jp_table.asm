@@ -1,3 +1,7 @@
+;
+; Created by keksklauer4 - 26.04.2021
+;
+
 ; Huge jump table to enable fast random access in external RAM.
 
 cseg at 4000h
