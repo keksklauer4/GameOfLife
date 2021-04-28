@@ -1281,5 +1281,3 @@ l_jp_table:
 ; destination for A = 255:
    MOV DPTR, #255
    RET
-
-END

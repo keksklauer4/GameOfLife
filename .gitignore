@@ -10,6 +10,8 @@ cpp/jp_table_gen
 *.bin
 *.bin~
 *.mcu8051ide~
+*.inc~
+*.vhc~
 
 # Prerequisites
 *.d

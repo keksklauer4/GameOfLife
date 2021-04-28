@@ -1,26 +1,58 @@
-$INCLUDE("../cpp/jp_table.asm")
-$INCLUDE("lookup_tables.asm")
-
 ;
 ; Created by keksklauer4 - 26.04.2021
 ;
 
-cseg at 0h
+
+CSEG at 0h
 l_start:
-	JMP l_init
+	AJMP l_init
 
 cseg at 100h
 l_init:
 	MOV IE, #0
-	MOV A, #132
+	MOV A, #0
 	CALL f_load_dptr
-	NOP
-
+	MOV A, #01010101b
+	MOVX @DPTR, A
+	CALL f_init_matrices
+	CALL f_init_registers
 l_loop:
-	NOP
-	NOP
+	CALL f_iteration
 	JMP l_loop
 
+f_iteration:
+	CALL f_draw_screen
+	CALL f_key_handler ; handle key presses
+	MOV A, r5
+	JNB A.0, l_not_in_simulation_mode
+	; start mode
+	CALL f_memcpy_screen_to_matrix
+	CALL f_calculate_next_generation
+l_not_in_simulation_mode:
+	; sleep
+	RET
+
+
+; consumes A, r0, DPTR
+f_init_matrices:
+	MOV A, #0
+	CALL f_load_dptr
+	MOV r0, #0
+	MOV A, #0
+l_init_matrices_loop:
+	MOVX @DPTR, A
+	INC DPTR
+	DJNZ r0, l_init_matrices_loop
+l_end_init_matrices:
+	RET
+
+; changes to rb2, sets variables
+f_init_registers:
+	MOV PSW, #00011000b
+	MOV r7, #0 ; y=0
+	MOV r6, #0 ; x=0
+	MOV r5, #0 ; start=false
+	RET
 
 f_key_handler:
 	MOV PSW, #00011000b
@@ -80,17 +112,7 @@ l_quit_press_handler:
 f_toggle_pixel:
 	; set DPTR to correct location
 	; for that, set A to correct offset
-	MOV A, r7
-	ANL A, #00011111b
-	RL A
-	RL A
-	MOV r0, A
-	MOV A, r6
-	ANL A, #00011000b
-	RL A
-	SWAP A
-	ORL A, r0 ; now A is correct offset
-	CALL f_load_dptr
+	CALL f_fetch_pixel
 	; DPTR is now set to correct byte
 	MOV A, r6 ; get lower three bit to get correct bit mask
 	ANL A, #00000111b
@@ -219,11 +241,6 @@ l_memcpy_loop:
 
 
 f_calculate_next_generation: ; (huge function!)
-	; steps:
-	; init:
-	; 	- set lowest row in rb to 0s
-	;	  - read middle row in rb
-	; 1. read lower two rows into register bank
 
 	; upmost row to 0s
 	MOV PSW, #00001000b
@@ -476,7 +493,7 @@ l_fill_line_registers:
 	XRL A, #00011111b
 	JZ l_set_lowest_zero
 
-	; readin in lowest
+	; read in lowest
 	MOVX A, @DPTR
 	MOV r4, A
 	INC DPTR
@@ -502,9 +519,183 @@ l_set_lowest_zero:
 	JMP l_row_generation_loop ; go back to start of loop
 
 
+; clear screen
+; consumes A, r0 and DPTR
+f_clear_screen:
+	MOV DPTR, #128
+	MOV r0, #128
+	MOV A, #0
+
+l_clear_screen_loop:
+	MOVX @DPTR, A
+	INC DPTR
+	DJNZ r0, l_clear_screen_loop
+
+	RET
+
+
+f_draw_screen:
+	MOV PSW, #00011000b
+	MOV A, r7 ; we have to save the current line of the cursor
+	PUSH A
+	MOV r0, #0
+	MOV r2, #01111111b
+
+l_draw_screen_loop:
+	CALL f_prepare_line
+	MOV B, A
+	MOV A, r2
+	MOV P1, A
+	MOV P2, B
+	JNB A.0, l_done_drawing
+	RR A
+	MOV r2, A
+	INC r0
+	SJMP l_draw_screen_loop
+
+l_done_drawing:
+	POP A
+	MOV r7, A
+	RET
+
+f_prepare_line:
+	MOV PSW, #00011000b
+	MOV A, r7
+	ADD A, r0
+	MOV DPTR, #l_row_state_lookup
+	; we can now determine the state of the row
+	MOVC A, @A+DPTR
+	JZ l_normal_line
+	DEC A
+	JZ l_empty_line
+l_edge_line: ; fast indexing in lookup table
+	MOV DPTR, #l_edge_line_draw_lookup
+	MOV A, r6 ; read x coordinate
+	MOVC A, @A+DPTR
+	CPL A
+	RET
+
+l_empty_line:
+	MOV A, #0xFF
+	RET
+
+l_normal_line: ; Attention! Tedious line draw logic awaits whoever passes this label!
+	; two make it a bit easier, we split this logic again
+	; there are three possibilities:
+	; 1. x value is far to the left (display edge and potentially empty pixels)
+	; 2. x value is more or less centered (display solely from board contents)
+	; 3. x value is far to the right (display board contents, edge and potentially empty pixels)
+	MOV A, r6 ; read x coordinate
+	MOV DPTR, #l_draw_line_state_lookup
+	MOVC A, @A+DPTR
+	JZ l_centered_normal_line
+	DEC A
+	JZ l_left_normal_line
+l_right_normal_line: ; we see the left edge of our board (3.)
+	; r6 >= 28
+	MOV A, r6
+	CLR C
+	SUBB A, #28
+	MOV r3, A ; temporarily save that offset for indexing lookup table
+	INC A
+	MOV r1, A
+	MOV A, #00000010b
+
+l_bitmask_right_loop:
+	DJNZ r1, l_apply_bitmasks_right_normal_line
+	RL A
+	SJMP l_bitmask_right_loop
+
+l_apply_bitmasks_right_normal_line:
+	DEC A
+	CPL A
+	MOV B, A
+	CALL f_fetch_pixel
+	MOV A, B
+	MOV r1, A
+	MOVX A, @DPTR
+	ANL A, r1 ; mask away unwanted bits on the right (to make some room for the stuff we get from the lookup table)
+	MOV A, r1
+	; let's use the lookup table to get the bits on the right
+	MOV DPTR, #l_normal_right_mask_lookup
+	MOV A, r3 ; get the offset back
+	MOVC A, @A+DPTR
+	ORL A, r1 ; merge both parts
+
+	AJMP l_ret_from_normal_line
+
+l_left_normal_line: ; we see the left edge of our board (1.)
+	; => r6 <= 2 -> get mask
+	MOV A, r6
+	MOV DPTR, #l_normal_left_mask_lookup
+	MOVC A, @A+DPTR
+	MOV r3, A
+	CALL f_fetch_pixel
+	MOV A, #3
+	CLR C
+	SUBB A, r6
+	MOV r1, A
+	MOVX A, @DPTR
+
+l_shift_right_loop:
+	CLR C
+	RRC A
+	DJNZ r1, l_shift_right_loop
+
+l_shift_right_loop_end:
+	ORL A, r3 ; mask in bits we retrieved from lookup table
+	AJMP l_ret_from_normal_line
+
+l_centered_normal_line: ; we are somewhere centered on the board
+	CALL f_fetch_pixel
+	MOVX A, @DPTR
+	MOV B, A
+	INC DPTR
+	MOVX A, @DPTR
+	MOV r1, A
+	MOV A, r6 ; get x position to know the amount of times to shift
+	ANL A, #00000111b
+	INC A
+	MOV r3, A
+	MOV A, r1
+	XCH A, B
+	; A contains pixels at location k+1 while B contains pixels at location k
+	; we will shift apropriately over both registers
+l_centered_line_shift_loop:
+	DJNZ r3, l_prepared_centered_normal_line
+	; no need for CLR C because rightmost contents of A (k+1) will be trashed anyways
+	RLC A
+	XCH A, B
+	RLC A ; shift leftmost bit (in Carry) from (k+1) in k
+	XCH A, B
+	SJMP l_centered_line_shift_loop
+
+l_prepared_centered_normal_line:
+	XCH A, B ; we need contents of B into A
+
+l_ret_from_normal_line:
+	INC r7 ; normal line means that we have to increment our line counter (we need that because of f_fetch_pixel)
+	DEC r0 ; if we INC r7, we have to DEC r0 to stay consistent as r0+r7 is used for determining the line state
+	CPL A
+	RET
+
+
+; consumes A, r1, PSW must be set to 11
+f_fetch_pixel:
+	MOV A, r7
+	ANL A, #00011111b
+	RL A
+	RL A
+	MOV r1, A
+	MOV A, r6
+	ANL A, #00011000b
+	RL A
+	SWAP A
+	ORL A, r1 ; now A is correct offset
+	; no RET because it just flows right into f_load_dptr
 
 ; reg A is offset to some memory location in external ram (pointing to an board byte)
-; routine sets DPTR to correct byte location (in at most 3 jumps, 1 ret and 3 MOV(X)s, some arithmetics))
+; routine sets DPTR to correct byte location (in at most 3 jumps, 1 ret and 3 MOV(X)s, some arithmetics)
 ; -> much faster than INC DPTR in a loop!
 f_load_dptr:
 	JB A.7, l_1x_bit
@@ -536,5 +727,8 @@ l_11_bit:
 	RL A
 	JMP @A+DPTR
 	; no RET needed!
+
+INCLUDE "../cpp/jp_table.asm"
+INCLUDE "lookup_tables.asm"
 
 END
