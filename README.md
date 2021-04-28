@@ -3,4 +3,9 @@ A game of life implementation in assembly for 8051 (trashy uController).
 
 # In Progress...
 
-# Testing? Nope.
+## What to do next?
+- Implement button handler remembering last press state
+- Implement async execution with idle mode
+- Test calculate next generation
+- Test drawing (right and below)
+- Test button handler

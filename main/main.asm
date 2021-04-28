@@ -21,6 +21,7 @@ l_loop:
 	JMP l_loop
 
 f_iteration:
+	CALL f_clear_screen
 	CALL f_draw_screen
 	CALL f_key_handler ; handle key presses
 	MOV A, r5
