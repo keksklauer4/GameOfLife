@@ -4,15 +4,16 @@
 #include<cinttypes>
 
 // see page 38 of http://web.mit.edu/6.115/www/document/8051.pdf
-#define A_OFFSET 0xE0
-#define B_OFFSET 0xF0
-#define PSW_OFFSET 0xD0
-#define SP_OFFSET 0x81
-#define DPTR_OFFSET 0x82
-#define P0_OFFSET 0x80
-#define P1_OFFSET 0x90
-#define P2_OFFSET 0xA0
-#define P3_OFFSET 0xB0
+#define SFR_MEM_OFFSET 0x80
+#define A_OFFSET 0xE0 - SFR_MEM_OFFSET
+#define B_OFFSET 0xF0 - SFR_MEM_OFFSET
+#define PSW_OFFSET 0xD0 - SFR_MEM_OFFSET
+#define SP_OFFSET 0x81 - SFR_MEM_OFFSET
+#define DPTR_OFFSET 0x82 - SFR_MEM_OFFSET
+#define P0_OFFSET 0x80 - SFR_MEM_OFFSET
+#define P1_OFFSET 0x90 - SFR_MEM_OFFSET
+#define P2_OFFSET 0xA0 - SFR_MEM_OFFSET
+#define P3_OFFSET 0xB0 - SFR_MEM_OFFSET
 
 
 namespace emu
@@ -42,15 +43,15 @@ namespace emu
   {
     void setRegisters()
     {
-      regs.A = program_memory + A_OFFSET;
-      regs.B = program_memory + B_OFFSET;
-      regs.PSW = program_memory + PSW_OFFSET;
-      regs.SP = program_memory + SP_OFFSET;
-      regs.P0 = program_memory + P0_OFFSET;
-      regs.P1 = program_memory + P1_OFFSET;
-      regs.P2 = program_memory + P2_OFFSET;
-      regs.P3 = program_memory + P3_OFFSET;
-      regs.DPTR = (uint16_t*)(program_memory + DPTR_OFFSET);
+      regs.A = sfr_memory + A_OFFSET;
+      regs.B = sfr_memory + B_OFFSET;
+      regs.PSW = sfr_memory + PSW_OFFSET;
+      regs.SP = sfr_memory + SP_OFFSET;
+      regs.P0 = sfr_memory + P0_OFFSET;
+      regs.P1 = sfr_memory + P1_OFFSET;
+      regs.P2 = sfr_memory + P2_OFFSET;
+      regs.P3 = sfr_memory + P3_OFFSET;
+      regs.DPTR = (uint16_t*)(sfr_memory + DPTR_OFFSET);
     }
     void reset()
     {
@@ -69,6 +70,8 @@ namespace emu
 
     uint8_t *program_memory;
     uint8_t *external_memory;
+    uint8_t *internal_data;
+    uint8_t *sfr_memory;
     registers_t regs;
   } state_t;
 

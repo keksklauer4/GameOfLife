@@ -11,14 +11,14 @@
   m_state.regs.PC+=2
 
 #define POP_FROM_STACK()                                    \
-  m_state.program_memory[GET_SP()--]
+  m_state.internal_data[GET_SP()--]
 
 #define WRITE_STACK(val)                                    \
-  m_state.program_memory[GET_SP()] = val;                   \
+  m_state.internal_data[GET_SP()] = val;                   \
   INC_SP();
 
 #define WRITE_STACK_2B(addr)                                      \
-  *((uint16_t*)(m_state.program_memory + GET_SP())) = (uint16_t)addr; \
+  *((uint16_t*)(m_state.internal_data + GET_SP())) = (uint16_t)addr; \
   GET_SP() += 2
 
 #define JMP_FROM_STACK()          \
@@ -64,7 +64,7 @@
   if (cond) { JUMP_REL(offset); }
 
 #define FETCH_BIT_ADRESSABLE(val)         \
-  (m_state.program_memory + (val & 0xF8))
+  (m_state.sfr_memory + (val & 0x78))
 
 #define BIT_ADDRESSABLE_BITMASK(val) (0x01 << (val & 0x07))
 

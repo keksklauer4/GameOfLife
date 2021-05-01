@@ -1,0 +1,1 @@
+objcopy -I ihex test.hex -O binary test.bin

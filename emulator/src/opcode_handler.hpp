@@ -4,7 +4,9 @@
 #include "types.hpp"
 #include "emulator.hpp"
 #include "opcode_parse_helpers.hpp"
+#include "debug_opcode_helpers.hpp"
 
+#include <iostream>
 
 namespace emu
 {
@@ -16,7 +18,7 @@ namespace emu
   class OpcodeHandler
   {
     public:
-      OpcodeHandler(state_t& state): m_state(state){}
+      OpcodeHandler(state_t& state): m_state(state){ init(); }
 
       void execOpcode();
 
@@ -24,7 +26,7 @@ namespace emu
       void init();
 
     private:
-      uint8_t opcode;
+      uint8_t m_opcode;
       state_t& m_state;
       jp_table_entry_t m_jpTable[256];
 
@@ -97,7 +99,7 @@ namespace emu
       void AJMP_E1() { AJMP(AJMP_BITS(0b111)); }
 
       void INC_A_04() { INC(A_REG); }
-      void INC_data_addr_05() { INC(READ_DATA_ADDRESS()); }
+      void INC_data_addr_05() { RD_ADDRESS() INC(GET_DATA_ADDRESS()); }
       void INC_at_R0_06() { INC(GET_REG_IND(0)); }
       void INC_at_R1_07() { INC(GET_REG_IND(1)); }
       void INC_R0_08() { INC(GET_REG(0)); }
@@ -110,7 +112,7 @@ namespace emu
       void INC_R7_0F() { INC(GET_REG(7)); }
 
       void DEC_A_14() { DEC(A_REG); }
-      void DEC_data_addr_15() { DEC(READ_DATA_ADDRESS()); }
+      void DEC_data_addr_15() { RD_ADDRESS() DEC(GET_DATA_ADDRESS()); }
       void DEC_at_R0_16() { DEC(GET_REG_IND(0)); }
       void DEC_at_R1_17() { DEC(GET_REG_IND(1)); }
       void DEC_R0_18() { DEC(GET_REG(0)); }
@@ -132,7 +134,7 @@ namespace emu
       void ACALL_F1() { ACALL(AJMP_BITS(0b111)); }
 
       void ADD_data_24() { ADD(IMMEDIATE()); }
-      void ADD_data_addr_25() { ADD(*READ_DATA_ADDRESS()); }
+      void ADD_data_addr_25() { RD_ADDRESS() ADD(*GET_DATA_ADDRESS()); }
       void ADD_at_R0_26() { ADD(*GET_REG_IND(0)); }
       void ADD_at_R1_27() { ADD(*GET_REG_IND(1)); }
       void ADD_R0_28() { ADD(*GET_REG(0)); }
@@ -146,7 +148,7 @@ namespace emu
 
 
       void ADDC_data_34() { ADDC(IMMEDIATE()); }
-      void ADDC_data_addr_35() { ADDC(*READ_DATA_ADDRESS()); }
+      void ADDC_data_addr_35() { RD_ADDRESS() ADDC(*GET_DATA_ADDRESS()); }
       void ADDC_at_R0_36() { ADDC(*GET_REG_IND(0)); }
       void ADDC_at_R1_37() { ADDC(*GET_REG_IND(1)); }
       void ADDC_R0_38() { ADDC(*GET_REG(0)); }
@@ -159,8 +161,8 @@ namespace emu
       void ADDC_R7_3F() { ADDC(*GET_REG(7)); }
 
 
-      void ORL_data_addr_A_42() { ORL_BYTE(READ_DATA_ADDRESS(), *A_REG); }
-      void ORL_data_addr_data_43() { ORL_BYTE(READ_DATA_ADDRESS(), IMMEDIATE()); }
+      void ORL_data_addr_A_42() { RD_ADDRESS() ORL_BYTE(GET_DATA_ADDRESS(), *A_REG); }
+      void ORL_data_addr_data_43() { RD_ADDRESS() ORL_BYTE(GET_DATA_ADDRESS(), IMMEDIATE()); }
       void ORL_data_44() { ORL_BYTE(A_REG, IMMEDIATE()); }
       void ORL_data_addr_45() { ORL_BYTE(A_REG, *READ_ADDRESS_1B()); }
       void ORL_at_R0_46() { ORL_BYTE(A_REG, *GET_REG_IND(0)); }
@@ -177,8 +179,8 @@ namespace emu
       void ORL_C_bit_addr_A0() { ORL_C(true); }
 
 
-      void ANL_data_addr_A_52() { ANL_BYTE(READ_DATA_ADDRESS(), *A_REG); }
-      void ANL_data_addr_data_53() { ANL_BYTE(READ_DATA_ADDRESS(), IMMEDIATE()); }
+      void ANL_data_addr_A_52() { RD_ADDRESS() ANL_BYTE(GET_DATA_ADDRESS(), *A_REG); }
+      void ANL_data_addr_data_53() { RD_ADDRESS() ANL_BYTE(GET_DATA_ADDRESS(), IMMEDIATE()); }
       void ANL_data_54() { ANL_BYTE(A_REG, IMMEDIATE()); }
       void ANL_data_addr_55() { ANL_BYTE(A_REG, *READ_ADDRESS_1B()); }
       void ANL_at_R0_56() { ANL_BYTE(A_REG, *GET_REG_IND(0)); }
@@ -195,8 +197,8 @@ namespace emu
       void ANL_C_bit_addr_B0() { ANL_C(true); }
 
 
-      void XRL_data_addr_A_62() { XRL(READ_DATA_ADDRESS(), *A_REG); }
-      void XRL_data_addr_data_63() { XRL(READ_DATA_ADDRESS(), IMMEDIATE()); }
+      void XRL_data_addr_A_62() { RD_ADDRESS() XRL(GET_DATA_ADDRESS(), *A_REG); }
+      void XRL_data_addr_data_63() { RD_ADDRESS() XRL(GET_DATA_ADDRESS(), IMMEDIATE()); }
       void XRL_data_64() { XRL(A_REG, IMMEDIATE()); }
       void XRL_data_addr_65() { XRL(A_REG, *READ_ADDRESS_1B()); }
       void XRL_at_R0_66() { XRL(A_REG, *GET_REG_IND(0)); }
@@ -212,7 +214,7 @@ namespace emu
 
 
       void SUBB_data_94() { SUBB(IMMEDIATE()); }
-      void SUBB_data_addr_95() { SUBB(*READ_DATA_ADDRESS()); }
+      void SUBB_data_addr_95() { RD_ADDRESS() SUBB(*GET_DATA_ADDRESS()); }
       void SUBB_at_R0_96() { SUBB(*GET_REG_IND(0)); }
       void SUBB_at_R1_97() { SUBB(*GET_REG_IND(1)); }
       void SUBB_R0_98() { SUBB(*GET_REG(0)); }
@@ -226,7 +228,7 @@ namespace emu
 
 
       void CJNE_A_B4() { CJNE(*A_REG, IMMEDIATE()); }
-      void CJNE_A_data_addr_B5() { CJNE(*A_REG, *READ_DATA_ADDRESS()); }
+      void CJNE_A_data_addr_B5() { RD_ADDRESS() CJNE(*A_REG, *GET_DATA_ADDRESS()); }
       void CJNE_at_R0_B6() { CJNE(*GET_REG_IND(0), IMMEDIATE()); }
       void CJNE_at_R1_B7() { CJNE(*GET_REG_IND(1), IMMEDIATE()); }
       void CJNE_R0_B8() { CJNE(*GET_REG(0), IMMEDIATE()); }
@@ -239,7 +241,7 @@ namespace emu
       void CJNE_R7_BF() { CJNE(*GET_REG(7), IMMEDIATE()); }
 
 
-      void XCH_data_addr_C5() { XCH(READ_DATA_ADDRESS()); }
+      void XCH_data_addr_C5() { RD_ADDRESS() XCH(GET_DATA_ADDRESS()); }
       void XCH_at_R0_C6() { XCH(GET_REG_IND(0)); }
       void XCH_at_R1_C7() { XCH(GET_REG_IND(1)); }
       void XCH_R0_C8() { XCH(GET_REG(0)); }
@@ -256,7 +258,7 @@ namespace emu
       void XCHD_at_R1_D7() { XCHD(GET_REG_IND(1)); }
 
 
-      void DJNZ_data_addr_D5() { DJNZ(READ_DATA_ADDRESS()); }
+      void DJNZ_data_addr_D5() { RD_ADDRESS() DJNZ(GET_DATA_ADDRESS()); }
       void DJNZ_R0_D8() { DJNZ(GET_REG(0)); }
       void DJNZ_R1_D9() { DJNZ(GET_REG(1)); }
       void DJNZ_R2_DA() { DJNZ(GET_REG(2)); }
@@ -268,7 +270,7 @@ namespace emu
 
 
       void MOV_data_74() { MOV(A_REG, IMMEDIATE()); }
-      void MOV_data_addr_75() { MOV(READ_DATA_ADDRESS(), IMMEDIATE()); }
+      void MOV_data_addr_75() { RD_ADDRESS() MOV(GET_DATA_ADDRESS(), IMMEDIATE()); }
       void MOV_at_R0_76() { MOV(GET_REG_IND(0), IMMEDIATE()); }
       void MOV_at_R1_77() { MOV(GET_REG_IND(1), IMMEDIATE()); }
       void MOV_R0_78() { MOV(GET_REG(0), IMMEDIATE()); }
@@ -281,34 +283,34 @@ namespace emu
       void MOV_R7_7F() { MOV(GET_REG(7), IMMEDIATE()); }
 
 
-      void MOV_data_addr_data_addr_85() { MOV(READ_DATA_ADDRESS(), *READ_DATA_ADDRESS()); }
-      void MOV_data_addr_at_R0_86() { MOV(READ_DATA_ADDRESS(), *GET_REG_IND(0)); }
-      void MOV_data_addr_at_R1_87() { MOV(READ_DATA_ADDRESS(), *GET_REG_IND(1)); }
-      void MOV_data_addr_R0_88() { MOV(READ_DATA_ADDRESS(), *GET_REG(0)); }
-      void MOV_data_addr_R1_89() { MOV(READ_DATA_ADDRESS(), *GET_REG(1)); }
-      void MOV_data_addr_R2_8A() { MOV(READ_DATA_ADDRESS(), *GET_REG(2)); }
-      void MOV_data_addr_R3_8B() { MOV(READ_DATA_ADDRESS(), *GET_REG(3)); }
-      void MOV_data_addr_R4_8C() { MOV(READ_DATA_ADDRESS(), *GET_REG(4)); }
-      void MOV_data_addr_R5_8D() { MOV(READ_DATA_ADDRESS(), *GET_REG(5)); }
-      void MOV_data_addr_R6_8E() { MOV(READ_DATA_ADDRESS(), *GET_REG(6)); }
-      void MOV_data_addr_R7_8F() { MOV(READ_DATA_ADDRESS(), *GET_REG(7)); }
+      void MOV_data_addr_data_addr_85() { RD_ADDRESSES() MOV(GET_DATA_ADDRESS(), *GET_DATA_ADDRESS_SEC()); }
+      void MOV_data_addr_at_R0_86() { RD_ADDRESS() MOV(GET_DATA_ADDRESS(), *GET_REG_IND(0)); }
+      void MOV_data_addr_at_R1_87() { RD_ADDRESS() MOV(GET_DATA_ADDRESS(), *GET_REG_IND(1)); }
+      void MOV_data_addr_R0_88() { RD_ADDRESS() MOV(GET_DATA_ADDRESS(), *GET_REG(0)); }
+      void MOV_data_addr_R1_89() { RD_ADDRESS() MOV(GET_DATA_ADDRESS(), *GET_REG(1)); }
+      void MOV_data_addr_R2_8A() { RD_ADDRESS() MOV(GET_DATA_ADDRESS(), *GET_REG(2)); }
+      void MOV_data_addr_R3_8B() { RD_ADDRESS() MOV(GET_DATA_ADDRESS(), *GET_REG(3)); }
+      void MOV_data_addr_R4_8C() { RD_ADDRESS() MOV(GET_DATA_ADDRESS(), *GET_REG(4)); }
+      void MOV_data_addr_R5_8D() { RD_ADDRESS() MOV(GET_DATA_ADDRESS(), *GET_REG(5)); }
+      void MOV_data_addr_R6_8E() { RD_ADDRESS() MOV(GET_DATA_ADDRESS(), *GET_REG(6)); }
+      void MOV_data_addr_R7_8F() { RD_ADDRESS() MOV(GET_DATA_ADDRESS(), *GET_REG(7)); }
 
       void MOVC_A_PC_83() { MOVC_IND_16((uint16_t*)PC_MEM_LOC); }
       void MOVC_A_DPTR_93() { MOVC_IND_16(DPTR_REG); }
 
-      void MOV_at_R0_data_addr_A6() { MOV(GET_REG_IND(0), *READ_DATA_ADDRESS()); }
-      void MOV_at_R1_data_addr_A7() { MOV(GET_REG_IND(1), *READ_DATA_ADDRESS()); }
-      void MOV_R0_data_addr_A8() { MOV(GET_REG(0), *READ_DATA_ADDRESS()); }
-      void MOV_R1_data_addr_A9() { MOV(GET_REG(1), *READ_DATA_ADDRESS()); }
-      void MOV_R2_data_addr_AA() { MOV(GET_REG(2), *READ_DATA_ADDRESS()); }
-      void MOV_R3_data_addr_AB() { MOV(GET_REG(3), *READ_DATA_ADDRESS()); }
-      void MOV_R4_data_addr_AC() { MOV(GET_REG(4), *READ_DATA_ADDRESS()); }
-      void MOV_R5_data_addr_AD() { MOV(GET_REG(5), *READ_DATA_ADDRESS()); }
-      void MOV_R6_data_addr_AE() { MOV(GET_REG(6), *READ_DATA_ADDRESS()); }
-      void MOV_R7_data_addr_AF() { MOV(GET_REG(7), *READ_DATA_ADDRESS()); }
+      void MOV_at_R0_data_addr_A6() { RD_ADDRESSES() MOV(GET_REG_IND(0), *GET_DATA_ADDRESS()); }
+      void MOV_at_R1_data_addr_A7() { RD_ADDRESSES() MOV(GET_REG_IND(1), *GET_DATA_ADDRESS()); }
+      void MOV_R0_data_addr_A8() { RD_ADDRESS() MOV(GET_REG(0), *GET_DATA_ADDRESS()); }
+      void MOV_R1_data_addr_A9() { RD_ADDRESS() MOV(GET_REG(1), *GET_DATA_ADDRESS()); }
+      void MOV_R2_data_addr_AA() { RD_ADDRESS() MOV(GET_REG(2), *GET_DATA_ADDRESS()); }
+      void MOV_R3_data_addr_AB() { RD_ADDRESS() MOV(GET_REG(3), *GET_DATA_ADDRESS()); }
+      void MOV_R4_data_addr_AC() { RD_ADDRESS() MOV(GET_REG(4), *GET_DATA_ADDRESS()); }
+      void MOV_R5_data_addr_AD() { RD_ADDRESS() MOV(GET_REG(5), *GET_DATA_ADDRESS()); }
+      void MOV_R6_data_addr_AE() { RD_ADDRESS() MOV(GET_REG(6), *GET_DATA_ADDRESS()); }
+      void MOV_R7_data_addr_AF() { RD_ADDRESS() MOV(GET_REG(7), *GET_DATA_ADDRESS()); }
 
 
-      void MOV_A_data_addr_E5() { MOV(A_REG, *READ_DATA_ADDRESS()); }
+      void MOV_A_data_addr_E5() { RD_ADDRESS() MOV(A_REG, *GET_DATA_ADDRESS()); }
       void MOV_A_at_R0_E6() { MOV(A_REG, *GET_REG_IND(0)); }
       void MOV_A_at_R1_E7() { MOV(A_REG, *GET_REG_IND(1)); }
       void MOV_A_R0_E8() { MOV(A_REG, *GET_REG(0)); }
@@ -320,7 +322,7 @@ namespace emu
       void MOV_A_R6_EE() { MOV(A_REG, *GET_REG(6)); }
       void MOV_A_R7_EF() { MOV(A_REG, *GET_REG(7)); }
 
-      void MOV_data_addr_A_F5() { MOV(READ_DATA_ADDRESS(), *A_REG); }
+      void MOV_data_addr_A_F5() { RD_ADDRESS() MOV(GET_DATA_ADDRESS(), *A_REG); }
       void MOV_at_R0_A_F6() { MOV(GET_REG_IND(0), *A_REG); }
       void MOV_at_R1_A_F7() { MOV(GET_REG_IND(1), *A_REG); }
       void MOV_R0_A_F8() { MOV(GET_REG(0), *A_REG); }

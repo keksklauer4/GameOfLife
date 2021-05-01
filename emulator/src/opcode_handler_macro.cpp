@@ -21,7 +21,7 @@ void OpcodeHandler::ADD(uint8_t value)
   a = (a_reg & 0x0F) + (value & 0x0F);
   AUX_CARRY_CONDITIONAL((a & 0x0F) != 0)
   a = (a_reg & 0x7F) + (value & 0x7F);
-  overflow ^= ((a & 0x80) == 1);
+  overflow ^= ((a & 0x80) != 0);
   OV_CONDITIONAL(overflow)
   *A_REG += value;
 }
@@ -37,7 +37,7 @@ void OpcodeHandler::ADDC(uint8_t value)
   a = (a_reg & 0x0F) + (value & 0x0F) + carry;
   AUX_CARRY_CONDITIONAL((a & 0x0F) != 0)
   a = (a_reg & 0x7F) + (value & 0x7F) + carry;
-  overflow ^= ((a & 0x80) == 1);
+  overflow ^= ((a & 0x80) != 0);
   OV_CONDITIONAL(overflow)
   *A_REG += value + carry;
 }
@@ -62,7 +62,7 @@ void OpcodeHandler::ANL_C(bool cpl)
 void OpcodeHandler::CJNE(uint8_t value, uint8_t comp)
 {
   int8_t offset = (int8_t)READ_BYTE_PC();
-  if (value == comp) { JUMP_REL(offset); }
+  if (value != comp) { JUMP_REL(offset); }
   CARRY_CONDITIONAL(value < comp)
 }
 
@@ -108,7 +108,7 @@ void OpcodeHandler::DEC(uint8_t* address)
 void OpcodeHandler::DIV()
 {
   RESET_CARRY();
-  if (*m_state.regs.B == 0)
+  if (*B_REG == 0)
   {
     SET_OV();
   }
@@ -134,7 +134,7 @@ void OpcodeHandler::INC(uint8_t* address)
 
 void OpcodeHandler::INC_DPTR()
 {
-  (*m_state.regs.DPTR)++;
+  (*DPTR_REG)++;
 }
 
 void OpcodeHandler::JB()
