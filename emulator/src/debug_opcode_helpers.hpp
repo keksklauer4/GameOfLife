@@ -2,6 +2,8 @@
 #define DEBUG_OPCODE_HELPERS_HPP
 #include <string>
 
+#include "opcode_parse_helpers.hpp"
+
 #define __DEBUG__ 1
 
 #if __DEBUG__ == 1
@@ -14,6 +16,31 @@
 
 #define DBG_PRINT_OPCODE()  \
   DEBUG(OS_OBJ << mnemonics[m_opcode]);
+
+#define READ_BYTE_OFFSET(offset)  \
+  (m_state.program_memory[(uint16_t)(PC_REG + offset)])
+
+#define BIT_ADDRESS_OFFSET(offset) (READ_BYTE_OFFSET(offset) & 0xF8) << "." << (READ_BYTE_OFFSET(offset) & 0x07)
+#define ADDRESS_OFFSET(offset) static_cast<int>(READ_BYTE_OFFSET(offset))
+#define DBG_2B_IMM() (*(uint16_t*)(m_state.program_memory + PC_REG))
+#define PC_REL_POS(offset) ((uint16_t)(PC_REG + offset + 1 + ((int)READ_BYTE_OFFSET(offset))))
+
+
+
+#define DBG_P_AD() OS_OBJ << "0x" << DBG_2B_IMM() << std::endl;
+#define DBG_P_DA() OS_OBJ << "0x" << READ_BYTE_OFFSET(0) << std::endl;
+#define DBG_P_BA() OS_OBJ << "0x" << BIT_ADDRESS_OFFSET(offset) << std::endl;
+#define DBG_P_BA_DA() OS_OBJ << "0x" << BIT_ADDRESS_OFFSET(offset)  << ", 0x" << READ_BYTE_OFFSET(1) << std::endl;
+#define DBG_P_IMM() DEBUG(OS_OBJ <<  std::dec << "#" << CAST(READ_BYTE_OFFSET(0)) << std::endl;)
+#define DBG_P_DA_IMM() OS_OBJ << "0x" << READ_BYTE_OFFSET(0) << ", #" << READ_BYTE_OFFSET(0) << std::endl;
+#define DBG_P_IMM_CD() OS_OBJ << "#" << READ_BYTE_OFFSET(0) << ", 0x" << PC_REL_POS(1)
+
+
+#define CAST(v) static_cast<unsigned int>(v)
+#define PRINT_REG_DEBUG() DEBUG(std::cout << "Printing Register Debug: " \
+  << "A: " << CAST(*A_REG) << "\t B: " << CAST(*B_REG) \
+  << "\t R0:" << CAST(*GET_REG(0)) << "\t R1:" << CAST(*GET_REG(1)) << std::endl; \
+  std::cout << "PC: 0x" << m_state.regs.PC << std::endl;)
 
 
 static std::string mnemonics[] = {
@@ -141,7 +168,7 @@ static std::string mnemonics[] = {
   "ORL C, ",     // 0x72
   "JMP @A+DPTR",     // 0x73
   "MOV A, ",     // 0x74
-  "MOV A, ",       // 0x75
+  "MOV ",       // 0x75
   "MOV @R0, ",   // 0x76
   "MOV @R1, ",   // 0x77
   "MOV R0, ",    // 0x78

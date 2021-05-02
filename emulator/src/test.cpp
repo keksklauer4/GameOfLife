@@ -1,20 +1,31 @@
 #include <iostream>
 #include <memory>
+#include <chrono>
 
 #include "emulator.hpp"
+
 using namespace emu;
 int main()
 {
   std::cout << "hi" << std::endl;
-  std::string filename = "../test/test.bin";
+  std::string filename = "../test/main.bin";
   Emulator emu;
   emu.setup(filename);
 
-  for(int i = 0; i < 100; i++)
+  using namespace std::chrono;
+  high_resolution_clock::time_point t1 = high_resolution_clock::now();
+  for(int i = 0; i < 1000000; i++)
   {
-    std::cout << "Iteration " << (i+1) << std::endl;
+    DEBUG(std::cout << "Iteration " << (i+1) << std::endl;)
     emu.step();
-    std::cout << std::endl << std::endl;
+    //DEBUG(char c = getchar();)
+    DEBUG(std::cout << std::endl << std::endl;)
   }
+  high_resolution_clock::time_point t2 = high_resolution_clock::now();
+  duration<double> time_span = duration_cast<duration<double>>(t2 - t1);
+  std::cout << "It took me " << time_span.count() << " seconds.";
+  std::cout << std::endl;
+
+  return 0;
 
 }

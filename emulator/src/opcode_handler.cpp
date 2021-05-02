@@ -5,11 +5,10 @@ using namespace emu;
 void OpcodeHandler::execOpcode()
 {
   m_opcode = READ_BYTE_PC();
-  std::cout << "Opcode to execute: " << std::hex <<
-    static_cast<unsigned int>(m_opcode) << std::endl;
+  DEBUG(std::cout << "Opcode to execute: " << std::hex <<
+    static_cast<unsigned int>(m_opcode) << std::endl;)
   PRINT_REG_DEBUG()
   DBG_PRINT_OPCODE()
-  std::cout << std::endl;
   (*this.*(m_jpTable[m_opcode]))();
 }
 

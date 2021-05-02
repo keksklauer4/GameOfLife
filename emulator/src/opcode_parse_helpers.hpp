@@ -9,11 +9,12 @@
 #define INC_PC() m_state.regs.PC++
 #define GET_SP() (*m_state.regs.SP)
 #define INC_SP() GET_SP()++
+#define DEC_SP() GET_SP()--
 #define READ_ADDRESS_1B() ((uint8_t*)(m_state.program_memory + INC_PC()))
 #define READ_BYTE_PC() m_state.program_memory[INC_PC()]
 #define IMMEDIATE() READ_BYTE_PC()
 #define READ_2BYTE_PC() (((uint16_t)READ_BYTE_PC())<<8) | READ_BYTE_PC()
-#define SP_LOCATION() m_state.program_memory[*m_state.regs.SP]
+#define SP_LOCATION() m_state.program_memory[GET_SP()]
 
 #define PARSE_REG_BANK() ((*m_state.regs.PSW) & 0b00011000)
 #define GET_REG(i) (m_state.program_memory + PARSE_REG_BANK() + i)
@@ -34,12 +35,5 @@ constexpr uint16_t AJMP_BITS(uint16_t v)
 // There is one MOV data_address, data_address instruction which is why this dirty copy pasta is needed.
 #define RD_ADDRESSES() RD_ADDRESS() uint8_t addr2 = READ_BYTE_PC();
 #define GET_DATA_ADDRESS_SEC() (addr2 & 0x80 == 0 ? m_state.internal_data + addr2 : m_state.sfr_memory + (addr2 & 0x7F))
-
-
-#define CAST(v) static_cast<unsigned int>(v)
-#define PRINT_REG_DEBUG() std::cout << "Printing Register Debug: " \
-  << "A: " << CAST(*A_REG) << "\t B: " << CAST(*B_REG) \
-  << "\t R0:" << CAST(*GET_REG(0)) << "\t R1:" << CAST(*GET_REG(1)) << std::endl; \
-  std::cout << "PC: 0x" << m_state.regs.PC << std::endl;
 
 #endif

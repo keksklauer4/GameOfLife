@@ -7,27 +7,24 @@
 #define BSWAP16(v) __builtin_bswap16(v)
 
 #define READ_2BYTE_PC_BIG_ENDIAN()                                \
-  BSWAP16(((uint16_t*)m_state.program_memory)[m_state.regs.PC]);  \
+  BSWAP16(*((uint16_t*)(m_state.program_memory + PC_REG)));  \
   m_state.regs.PC+=2
 
-#define POP_FROM_STACK()                                    \
-  m_state.internal_data[GET_SP()--]
+#define POP_FROM_STACK()            \
+  m_state.internal_data[DEC_SP()]
 
-#define WRITE_STACK(val)                                    \
-  m_state.internal_data[GET_SP()] = val;                   \
-  INC_SP();
+#define WRITE_STACK(val)                 \
+  INC_SP();                              \
+  m_state.internal_data[GET_SP()] = (val);
 
-#define WRITE_STACK_2B(addr)                                      \
-  *((uint16_t*)(m_state.internal_data + GET_SP())) = (uint16_t)addr; \
-  GET_SP() += 2
+#define WRITE_STACK_2B(addr)  \
+  WRITE_STACK(addr & 0xFF)    \
+  WRITE_STACK(addr >> 8)
 
 #define JMP_FROM_STACK()          \
-  --(GET_SP());                   \
-  uint16_t newPC = SP_LOCATION(); \
-  --(GET_SP());                   \
-  newPC <<= 8;                    \
-  newPC |= SP_LOCATION();         \
-  m_state.regs.PC = newPC
+  PC_REG = POP_FROM_STACK();      \
+  PC_REG <<= 8;                   \
+  PC_REG |= POP_FROM_STACK()
 
 
 #define JUMP_REL(offset) m_state.regs.PC += (int8_t)offset
