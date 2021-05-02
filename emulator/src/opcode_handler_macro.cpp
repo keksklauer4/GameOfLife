@@ -7,6 +7,7 @@ void OpcodeHandler::NOP(){}
 
 void OpcodeHandler::ACALL(uint16_t upper_bits)
 {
+  DBG_CODE_ADDR_ABS(upper_bits)
   upper_bits |= READ_BYTE_PC();
   CALL_LOC(upper_bits);
 }
@@ -44,6 +45,7 @@ void OpcodeHandler::ADDC(uint8_t value)
 
 void OpcodeHandler::AJMP(uint16_t upper_bits)
 {
+  DBG_CODE_ADDR_ABS(upper_bits)
   upper_bits |= READ_BYTE_PC();
   JUMP_LOC(upper_bits);
 }
@@ -123,6 +125,7 @@ void OpcodeHandler::DIV()
 
 void OpcodeHandler::DJNZ(uint8_t* address)
 {
+  DBG_P_REL()
   (*address)--;
   CONDITIONAL_REL_JUMP((*address) != 0)
 }
@@ -139,11 +142,13 @@ void OpcodeHandler::INC_DPTR()
 
 void OpcodeHandler::JB()
 {
+  DBG_P_BA_REL()
   const fuint32_t bit = READ_BYTE_PC();
   CONDITIONAL_REL_JUMP(CHECK_BIT_ADDRESSABLE_SET(bit) != 0)
 }
 void OpcodeHandler::JBC()
 {
+  DBG_P_BA_REL()
   const fuint32_t bit = READ_BYTE_PC();
   const int8_t offset = (int8_t)READ_BYTE_PC();
   if(CHECK_BIT_ADDRESSABLE_SET(bit) != 0)
@@ -155,6 +160,7 @@ void OpcodeHandler::JBC()
 
 void OpcodeHandler::JC()
 {
+  DBG_P_BA_REL()
   CONDITIONAL_REL_JUMP(GET_CARRY_NO_SHIFT() != 0)
 }
 
@@ -165,6 +171,7 @@ void OpcodeHandler::JMP_A_DPTR()
 
 void OpcodeHandler::JNB()
 {
+  DBG_P_BA_REL()
   const fuint32_t bit = READ_BYTE_PC();
   CONDITIONAL_REL_JUMP(CHECK_BIT_ADDRESSABLE_SET(bit) == 0)
 }
@@ -176,11 +183,13 @@ void OpcodeHandler::JNC()
 
 void OpcodeHandler::JNZ()
 {
+  DBG_P_REL()
   CONDITIONAL_REL_JUMP(*A_REG != 0)
 }
 
 void OpcodeHandler::JZ()
 {
+  DBG_P_REL()
   CONDITIONAL_REL_JUMP(*A_REG == 0)
 }
 
@@ -249,12 +258,14 @@ void OpcodeHandler::ORL_C(bool cpl)
 
 void OpcodeHandler::POP()
 {
+  DBG_P_DA()
   uint8_t* addr = READ_ADDRESS_1B();
   *addr = POP_FROM_STACK();
 }
 
 void OpcodeHandler::PUSH()
 {
+  DBG_P_DA()
   WRITE_STACK(*READ_ADDRESS_1B());
 }
 

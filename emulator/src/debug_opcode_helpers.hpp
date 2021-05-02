@@ -1,6 +1,8 @@
 #ifndef DEBUG_OPCODE_HELPERS_HPP
 #define DEBUG_OPCODE_HELPERS_HPP
 #include <string>
+#include <map>
+#include <cinttypes>
 
 #include "opcode_parse_helpers.hpp"
 
@@ -19,36 +21,77 @@
 
 #define READ_BYTE_OFFSET(offset)  \
   (m_state.program_memory[(uint16_t)(PC_REG + offset)])
+#define READ_SIGNED_OFFSET(offset)  \
+  (*((int8_t*)(m_state.program_memory + (uint16_t)(PC_REG + offset))))
 
 #define BIT_ADDRESS_OFFSET(offset) (READ_BYTE_OFFSET(offset) & 0xF8) << "." << (READ_BYTE_OFFSET(offset) & 0x07)
 #define ADDRESS_OFFSET(offset) static_cast<int>(READ_BYTE_OFFSET(offset))
 #define DBG_2B_IMM() (*(uint16_t*)(m_state.program_memory + PC_REG))
 #define PC_REL_POS(offset) ((uint16_t)(PC_REG + offset + 1 + ((int)READ_BYTE_OFFSET(offset))))
 
+#define HEX() "0x" << std::hex
+#define DECI() std::dec
 
+#define DBG_BIT_ADDRESSABLE(offset)                                     \
+  auto v = READ_BYTE_OFFSET(offset);                                    \
+  auto it = bit_addressable_map.find(v & 0xF8);                         \
+  if (it == bit_addressable_map.end()){ OS_OBJ << HEX() << CAST(v&0xF8); }  \
+  else { OS_OBJ << it->second;}                                         \
+  OS_OBJ << "." << (v&0x7);
 
-#define DBG_P_AD() OS_OBJ << "0x" << DBG_2B_IMM() << std::endl;
-#define DBG_P_DA() OS_OBJ << "0x" << READ_BYTE_OFFSET(0) << std::endl;
-#define DBG_P_BA() OS_OBJ << "0x" << BIT_ADDRESS_OFFSET(offset) << std::endl;
-#define DBG_P_BA_DA() OS_OBJ << "0x" << BIT_ADDRESS_OFFSET(offset)  << ", 0x" << READ_BYTE_OFFSET(1) << std::endl;
-#define DBG_P_IMM() DEBUG(OS_OBJ <<  std::dec << "#" << CAST(READ_BYTE_OFFSET(0)) << std::endl;)
-#define DBG_P_DA_IMM() OS_OBJ << "0x" << READ_BYTE_OFFSET(0) << ", #" << READ_BYTE_OFFSET(0) << std::endl;
-#define DBG_P_IMM_CD() OS_OBJ << "#" << READ_BYTE_OFFSET(0) << ", 0x" << PC_REL_POS(1)
+#define DBG_IMMEDIATE(offset)                     \
+  OS_OBJ << "#" << DECI() << CAST(READ_BYTE_OFFSET(offset));
+
+#define DBG_REL_CODE(offset)                                    \
+  OS_OBJ << HEX() << CAST(PC_REG + 1 + READ_SIGNED_OFFSET(offset));
+
+#define DBG_COMMA() OS_OBJ << ", ";
+
+#define DBG_DATA_ADDR(offset)                   \
+  OS_OBJ << HEX() << CAST(READ_BYTE_OFFSET(offset));
+
+#define DBG_CODE_ADDR(offset)                   \
+  OS_OBJ << HEX() << CAST(READ_BYTE_OFFSET(offset));
+
+#define DBG_CODE_ADDR_ABS(bitmask)                   \
+  OS_OBJ << HEX() << CAST(bitmask | READ_BYTE_OFFSET(0));
+
+#define DBG_P_REL() DEBUG(DBG_REL_CODE(0))
+#define DBG_P_BA() DEBUG(DBG_BIT_ADDRESSABLE(0))
+#define DBG_P_BA_REL() DEBUG(DBG_BIT_ADDRESSABLE(0) DBG_COMMA() DBG_REL_CODE(1))
+#define DBG_P_IMM() DEBUG(DBG_IMMEDIATE(0))
+#define DBG_P_IMM_REL() DEBUG(DBG_IMMEDIATE(0) DBG_COMMA() DBG_REL_CODE(1))
+#define DBG_P_DA() DEBUG(DBG_DATA_ADDR(0))
 
 
 #define CAST(v) static_cast<unsigned int>(v)
 #define PRINT_REG_DEBUG() DEBUG(std::cout << "Printing Register Debug: " \
   << "A: " << CAST(*A_REG) << "\t B: " << CAST(*B_REG) \
   << "\t R0:" << CAST(*GET_REG(0)) << "\t R1:" << CAST(*GET_REG(1)) << std::endl; \
-  std::cout << "PC: 0x" << m_state.regs.PC << std::endl;)
+  std::cout << "PC: 0x" << PC_REG << std::endl;)
 
+
+static std::map<uint8_t, std::string> bit_addressable_map{
+  { 0x80, "P0" },
+  { 0x88, "TCON" },
+  { 0x90, "P1" },
+  { 0x98, "SCON" },
+  { 0xA0, "P2" },
+  { 0xA8, "IE" },
+  { 0xB0, "P3" },
+  { 0xB8, "IP" },
+  { 0xC8, "T2CON" },
+  { 0xD0, "PSW" },
+  { 0xE0, "ACC" },
+  { 0xF0, "B" }
+};
 
 static std::string mnemonics[] = {
-  "NOP",    // 0x0
-  "AJMP ",   // 0x0
-  "LJMP ",    // 0x0
-  "RR A",    // 0x0
-  "INC A",     // 0x04
+  "NOP",        // 0x00
+  "AJMP ",      // 0x01
+  "LJMP ",      // 0x02
+  "RR A",       // 0x03
+  "INC A",      // 0x04
   "INC ",       // 0x05
   "INC @R0",   // 0x06
   "INC @R1",   // 0x07
@@ -215,11 +258,11 @@ static std::string mnemonics[] = {
   "SUBB A, R7",    // 0x9F
 
   "ORL C, /",       // 0xA0
-  "AJMP ",     // 0xA1
+  "AJMP ",       // 0xA1
   "MOV C, ",     // 0xA2
-  "INC DPTR",     // 0xA3
-  "MUL AB",     // 0xA4
-  "<reserved>",       // 0xA5
+  "INC DPTR",    // 0xA3
+  "MUL AB",      // 0xA4
+  "<reserved>",  // 0xA5
   "MOV @R0, ",   // 0xA6
   "MOV @R1, ",   // 0xA7
   "MOV R0, ",    // 0xA8
@@ -231,12 +274,12 @@ static std::string mnemonics[] = {
   "MOV R6, ",    // 0xAE
   "MOV R7, ",    // 0xAF
 
-  "ANL C, /",       // 0xB0
-  "ACALL ",     // 0xB1
-  "CPL ",     // 0xB2
-  "CPL C",     // 0xB3
+  "ANL C, /",     // 0xB0
+  "ACALL ",       // 0xB1
+  "CPL ",         // 0xB2
+  "CPL C",        // 0xB3
   "CJNE A, ",     // 0xB4
-  "CJNE A, ",       // 0xB5
+  "CJNE A, ",     // 0xB5
   "CJNE @R0, ",   // 0xB6
   "CJNE @R1, ",   // 0xB7
   "CJNE R0, ",    // 0xB8
@@ -248,12 +291,12 @@ static std::string mnemonics[] = {
   "CJNE R6, ",    // 0xBE
   "CJNE R7, ",    // 0xBF
 
-  "PUSH ",       // 0xC0
-  "AJMP ",     // 0xC1
-  "CLR ",     // 0xC2
-  "CLR C",     // 0xC3
-  "SWAP A",     // 0xC4
-  "XCH A, ",       // 0xC5
+  "PUSH ",        // 0xC0
+  "AJMP ",        // 0xC1
+  "CLR ",         // 0xC2
+  "CLR C",        // 0xC3
+  "SWAP A",       // 0xC4
+  "XCH A, ",      // 0xC5
   "XCH A, @R0",   // 0xC6
   "XCH A, @R1",   // 0xC7
   "XCH A, R0",    // 0xC8
@@ -265,14 +308,14 @@ static std::string mnemonics[] = {
   "XCH A, R6",    // 0xCE
   "XCH A, R7",    // 0xCF
 
-  "POP ",       // 0xD0
-  "ACALL ",     // 0xD1
-  "SETB ",     // 0xD2
-  "SETB C",     // 0xD3
-  "DA A",     // 0xD4
-  "DJNZ ",       // 0xD5
-  "XCHD A, @R0, ",   // 0xD6
-  "XCHD A, @R1, ",   // 0xD7
+  "POP ",         // 0xD0
+  "ACALL ",       // 0xD1
+  "SETB ",        // 0xD2
+  "SETB C",       // 0xD3
+  "DA A",         // 0xD4
+  "DJNZ ",        // 0xD5
+  "XCHD A, @R0, ",// 0xD6
+  "XCHD A, @R1, ",// 0xD7
   "DJNZ R0, ",    // 0xD8
   "DJNZ R1, ",    // 0xD9
   "DJNZ R2, ",    // 0xDA

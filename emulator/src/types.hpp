@@ -14,6 +14,17 @@
 #define P1_OFFSET 0x90 - SFR_MEM_OFFSET
 #define P2_OFFSET 0xA0 - SFR_MEM_OFFSET
 #define P3_OFFSET 0xB0 - SFR_MEM_OFFSET
+#define IP_OFFSET 0xB8 - SFR_MEM_OFFSET
+#define IE_OFFSET 0xA8 - SFR_MEM_OFFSET
+#define TMOD_OFFSET 0x89 - SFR_MEM_OFFSET
+#define TCON_OFFSET 0x88 - SFR_MEM_OFFSET
+#define TH0_OFFSET 0x8C - SFR_MEM_OFFSET
+#define TL0_OFFSET 0x8A - SFR_MEM_OFFSET
+#define TH1_OFFSET 0x8D - SFR_MEM_OFFSET
+#define TL1_OFFSET 0x8B - SFR_MEM_OFFSET
+#define SCON_OFFSET 0x98 - SFR_MEM_OFFSET
+#define SBUF_OFFSET 0x99 - SFR_MEM_OFFSET
+#define PCON_OFFSET 0x87 - SFR_MEM_OFFSET
 
 
 namespace emu
@@ -37,6 +48,18 @@ namespace emu
     uint8_t* P1;
     uint8_t* P2;
     uint8_t* P3;
+
+    uint8_t* IP;
+    uint8_t* IE;
+    uint8_t* TMOD;
+    uint8_t* TCON;
+    uint8_t* TH0;
+    uint8_t* TH1;
+    uint8_t* TL0;
+    uint8_t* TL1;
+    uint8_t* SCON;
+    uint8_t* SBUF;
+    uint8_t* PCON;
   } registers_t;
 
   typedef struct CPUState
@@ -52,6 +75,17 @@ namespace emu
       regs.P2 = sfr_memory + P2_OFFSET;
       regs.P3 = sfr_memory + P3_OFFSET;
       regs.DPTR = (uint16_t*)(sfr_memory + DPTR_OFFSET);
+      regs.IP = sfr_memory + IP_OFFSET;
+      regs.IE = sfr_memory + IE_OFFSET;
+      regs.TMOD = sfr_memory + TMOD_OFFSET;
+      regs.TCON = sfr_memory + TCON_OFFSET;
+      regs.TH0 = sfr_memory + TH0_OFFSET;
+      regs.TH1 = sfr_memory + TH1_OFFSET;
+      regs.TL0 = sfr_memory + TL0_OFFSET;
+      regs.TL1 = sfr_memory + TL1_OFFSET;
+      regs.SCON = sfr_memory + SCON_OFFSET;
+      regs.SBUF = sfr_memory + SBUF_OFFSET;
+      regs.PCON = sfr_memory + PCON_OFFSET;
     }
     void reset()
     {
@@ -65,6 +99,17 @@ namespace emu
       *regs.P2 = 0xFF;
       *regs.P3 = 0xFF;
       *regs.SP = 7;
+      *regs.IP = 0x00;
+      *regs.IE = 0x00;
+      *regs.TMOD = 0x00;
+      *regs.TCON = 0x00;
+      *regs.TH0 = 0x00;
+      *regs.TH1 = 0x00;
+      *regs.TL0 = 0x00;
+      *regs.TL1 = 0x00;
+      *regs.SCON = 0x00;
+      *regs.SBUF = 0x00; // should be indeterminate but who cares
+      *regs.PCON = 0x00;
     }
 
 

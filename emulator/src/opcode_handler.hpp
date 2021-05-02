@@ -99,7 +99,7 @@ namespace emu
       void AJMP_E1() { AJMP(AJMP_BITS(0b111)); }
 
       void INC_A_04() { INC(A_REG); }
-      void INC_data_addr_05() { RD_ADDRESS() INC(GET_DATA_ADDRESS()); }
+      void INC_data_addr_05() { DBG_P_DA() RD_ADDRESS() INC(GET_DATA_ADDRESS()); }
       void INC_at_R0_06() { INC(GET_REG_IND(0)); }
       void INC_at_R1_07() { INC(GET_REG_IND(1)); }
       void INC_R0_08() { INC(GET_REG(0)); }
@@ -112,7 +112,7 @@ namespace emu
       void INC_R7_0F() { INC(GET_REG(7)); }
 
       void DEC_A_14() { DEC(A_REG); }
-      void DEC_data_addr_15() { RD_ADDRESS() DEC(GET_DATA_ADDRESS()); }
+      void DEC_data_addr_15() { DBG_P_DA() RD_ADDRESS() DEC(GET_DATA_ADDRESS()); }
       void DEC_at_R0_16() { DEC(GET_REG_IND(0)); }
       void DEC_at_R1_17() { DEC(GET_REG_IND(1)); }
       void DEC_R0_18() { DEC(GET_REG(0)); }
@@ -134,7 +134,7 @@ namespace emu
       void ACALL_F1() { ACALL(AJMP_BITS(0b111)); }
 
       void ADD_data_24() { DBG_P_IMM() ADD(IMMEDIATE()); }
-      void ADD_data_addr_25() { RD_ADDRESS() ADD(*GET_DATA_ADDRESS()); }
+      void ADD_data_addr_25() { DBG_P_DA() RD_ADDRESS() ADD(*GET_DATA_ADDRESS()); }
       void ADD_at_R0_26() { ADD(*GET_REG_IND(0)); }
       void ADD_at_R1_27() { ADD(*GET_REG_IND(1)); }
       void ADD_R0_28() { ADD(*GET_REG(0)); }
@@ -148,7 +148,7 @@ namespace emu
 
 
       void ADDC_data_34() { DBG_P_IMM() ADDC(IMMEDIATE()); }
-      void ADDC_data_addr_35() { RD_ADDRESS() ADDC(*GET_DATA_ADDRESS()); }
+      void ADDC_data_addr_35() { DBG_P_DA() RD_ADDRESS() ADDC(*GET_DATA_ADDRESS()); }
       void ADDC_at_R0_36() { ADDC(*GET_REG_IND(0)); }
       void ADDC_at_R1_37() { ADDC(*GET_REG_IND(1)); }
       void ADDC_R0_38() { ADDC(*GET_REG(0)); }
@@ -164,7 +164,7 @@ namespace emu
       void ORL_data_addr_A_42() { RD_ADDRESS() ORL_BYTE(GET_DATA_ADDRESS(), *A_REG); }
       void ORL_data_addr_data_43() { RD_ADDRESS() ORL_BYTE(GET_DATA_ADDRESS(), IMMEDIATE()); }
       void ORL_data_44() { DBG_P_IMM() ORL_BYTE(A_REG, IMMEDIATE()); }
-      void ORL_data_addr_45() { ORL_BYTE(A_REG, *READ_ADDRESS_1B()); }
+      void ORL_data_addr_45() { DBG_P_DA() ORL_BYTE(A_REG, *READ_ADDRESS_1B()); }
       void ORL_at_R0_46() { ORL_BYTE(A_REG, *GET_REG_IND(0)); }
       void ORL_at_R1_47() { ORL_BYTE(A_REG, *GET_REG_IND(1)); }
       void ORL_R0_48() { ORL_BYTE(A_REG, *GET_REG(0)); }
@@ -182,7 +182,7 @@ namespace emu
       void ANL_data_addr_A_52() { RD_ADDRESS() ANL_BYTE(GET_DATA_ADDRESS(), *A_REG); }
       void ANL_data_addr_data_53() { RD_ADDRESS() ANL_BYTE(GET_DATA_ADDRESS(), IMMEDIATE()); }
       void ANL_data_54() { DBG_P_IMM() ANL_BYTE(A_REG, IMMEDIATE()); }
-      void ANL_data_addr_55() { ANL_BYTE(A_REG, *READ_ADDRESS_1B()); }
+      void ANL_data_addr_55() { DBG_P_DA() ANL_BYTE(A_REG, *READ_ADDRESS_1B()); }
       void ANL_at_R0_56() { ANL_BYTE(A_REG, *GET_REG_IND(0)); }
       void ANL_at_R1_57() { ANL_BYTE(A_REG, *GET_REG_IND(1)); }
       void ANL_R0_58() { ANL_BYTE(A_REG, *GET_REG(0)); }
@@ -200,7 +200,7 @@ namespace emu
       void XRL_data_addr_A_62() { RD_ADDRESS() XRL(GET_DATA_ADDRESS(), *A_REG); }
       void XRL_data_addr_data_63() { RD_ADDRESS() XRL(GET_DATA_ADDRESS(), IMMEDIATE()); }
       void XRL_data_64() { DBG_P_IMM() XRL(A_REG, IMMEDIATE()); }
-      void XRL_data_addr_65() { XRL(A_REG, *READ_ADDRESS_1B()); }
+      void XRL_data_addr_65() { DBG_P_DA() XRL(A_REG, *READ_ADDRESS_1B()); }
       void XRL_at_R0_66() { XRL(A_REG, *GET_REG_IND(0)); }
       void XRL_at_R1_67() { XRL(A_REG, *GET_REG_IND(1)); }
       void XRL_R0_68() { XRL(A_REG, *GET_REG(0)); }
@@ -214,7 +214,7 @@ namespace emu
 
 
       void SUBB_data_94() { DBG_P_IMM() SUBB(IMMEDIATE()); }
-      void SUBB_data_addr_95() { RD_ADDRESS() SUBB(*GET_DATA_ADDRESS()); }
+      void SUBB_data_addr_95() { DBG_P_DA() RD_ADDRESS() SUBB(*GET_DATA_ADDRESS()); }
       void SUBB_at_R0_96() { SUBB(*GET_REG_IND(0)); }
       void SUBB_at_R1_97() { SUBB(*GET_REG_IND(1)); }
       void SUBB_R0_98() { SUBB(*GET_REG(0)); }
@@ -227,21 +227,21 @@ namespace emu
       void SUBB_R7_9F() { SUBB(*GET_REG(7)); }
 
 
-      void CJNE_A_B4() { DBG_P_IMM() CJNE(*A_REG, IMMEDIATE()); }
+      void CJNE_A_B4() { DBG_P_IMM_REL()  CJNE(*A_REG, IMMEDIATE()); }
       void CJNE_A_data_addr_B5() { RD_ADDRESS() CJNE(*A_REG, *GET_DATA_ADDRESS()); }
-      void CJNE_at_R0_B6() { DBG_P_IMM() CJNE(*GET_REG_IND(0), IMMEDIATE()); }
-      void CJNE_at_R1_B7() { DBG_P_IMM() CJNE(*GET_REG_IND(1), IMMEDIATE()); }
-      void CJNE_R0_B8() { DBG_P_IMM() CJNE(*GET_REG(0), IMMEDIATE()); }
-      void CJNE_R1_B9() { DBG_P_IMM() CJNE(*GET_REG(1), IMMEDIATE()); }
-      void CJNE_R2_BA() { DBG_P_IMM() CJNE(*GET_REG(2), IMMEDIATE()); }
-      void CJNE_R3_BB() { DBG_P_IMM() CJNE(*GET_REG(3), IMMEDIATE()); }
-      void CJNE_R4_BC() { DBG_P_IMM() CJNE(*GET_REG(4), IMMEDIATE()); }
-      void CJNE_R5_BD() { DBG_P_IMM() CJNE(*GET_REG(5), IMMEDIATE()); }
-      void CJNE_R6_BE() { DBG_P_IMM() CJNE(*GET_REG(6), IMMEDIATE()); }
-      void CJNE_R7_BF() { DBG_P_IMM() CJNE(*GET_REG(7), IMMEDIATE()); }
+      void CJNE_at_R0_B6() { DBG_P_IMM_REL() CJNE(*GET_REG_IND(0), IMMEDIATE()); }
+      void CJNE_at_R1_B7() { DBG_P_IMM_REL() CJNE(*GET_REG_IND(1), IMMEDIATE()); }
+      void CJNE_R0_B8() { DBG_P_IMM_REL() CJNE(*GET_REG(0), IMMEDIATE()); }
+      void CJNE_R1_B9() { DBG_P_IMM_REL() CJNE(*GET_REG(1), IMMEDIATE()); }
+      void CJNE_R2_BA() { DBG_P_IMM_REL() CJNE(*GET_REG(2), IMMEDIATE()); }
+      void CJNE_R3_BB() { DBG_P_IMM_REL() CJNE(*GET_REG(3), IMMEDIATE()); }
+      void CJNE_R4_BC() { DBG_P_IMM_REL() CJNE(*GET_REG(4), IMMEDIATE()); }
+      void CJNE_R5_BD() { DBG_P_IMM_REL() CJNE(*GET_REG(5), IMMEDIATE()); }
+      void CJNE_R6_BE() { DBG_P_IMM_REL() CJNE(*GET_REG(6), IMMEDIATE()); }
+      void CJNE_R7_BF() { DBG_P_IMM_REL() CJNE(*GET_REG(7), IMMEDIATE()); }
 
 
-      void XCH_data_addr_C5() { RD_ADDRESS() XCH(GET_DATA_ADDRESS()); }
+      void XCH_data_addr_C5() { DBG_P_DA() RD_ADDRESS() XCH(GET_DATA_ADDRESS()); }
       void XCH_at_R0_C6() { XCH(GET_REG_IND(0)); }
       void XCH_at_R1_C7() { XCH(GET_REG_IND(1)); }
       void XCH_R0_C8() { XCH(GET_REG(0)); }
@@ -258,6 +258,7 @@ namespace emu
       void XCHD_at_R1_D7() { XCHD(GET_REG_IND(1)); }
 
 
+      // TODO
       void DJNZ_data_addr_D5() { RD_ADDRESS() DJNZ(GET_DATA_ADDRESS()); }
       void DJNZ_R0_D8() { DJNZ(GET_REG(0)); }
       void DJNZ_R1_D9() { DJNZ(GET_REG(1)); }
@@ -298,16 +299,16 @@ namespace emu
       void MOVC_A_PC_83() { MOVC_IND_16((uint16_t*)PC_MEM_LOC); }
       void MOVC_A_DPTR_93() { MOVC_IND_16(DPTR_REG); }
 
-      void MOV_at_R0_data_addr_A6() { RD_ADDRESSES() MOV(GET_REG_IND(0), *GET_DATA_ADDRESS()); }
-      void MOV_at_R1_data_addr_A7() { RD_ADDRESSES() MOV(GET_REG_IND(1), *GET_DATA_ADDRESS()); }
-      void MOV_R0_data_addr_A8() { RD_ADDRESS() MOV(GET_REG(0), *GET_DATA_ADDRESS()); }
-      void MOV_R1_data_addr_A9() { RD_ADDRESS() MOV(GET_REG(1), *GET_DATA_ADDRESS()); }
-      void MOV_R2_data_addr_AA() { RD_ADDRESS() MOV(GET_REG(2), *GET_DATA_ADDRESS()); }
-      void MOV_R3_data_addr_AB() { RD_ADDRESS() MOV(GET_REG(3), *GET_DATA_ADDRESS()); }
-      void MOV_R4_data_addr_AC() { RD_ADDRESS() MOV(GET_REG(4), *GET_DATA_ADDRESS()); }
-      void MOV_R5_data_addr_AD() { RD_ADDRESS() MOV(GET_REG(5), *GET_DATA_ADDRESS()); }
-      void MOV_R6_data_addr_AE() { RD_ADDRESS() MOV(GET_REG(6), *GET_DATA_ADDRESS()); }
-      void MOV_R7_data_addr_AF() { RD_ADDRESS() MOV(GET_REG(7), *GET_DATA_ADDRESS()); }
+      void MOV_at_R0_data_addr_A6() { DBG_P_DA() RD_ADDRESSES() MOV(GET_REG_IND(0), *GET_DATA_ADDRESS()); }
+      void MOV_at_R1_data_addr_A7() { DBG_P_DA() RD_ADDRESSES() MOV(GET_REG_IND(1), *GET_DATA_ADDRESS()); }
+      void MOV_R0_data_addr_A8() { DBG_P_DA() RD_ADDRESS() MOV(GET_REG(0), *GET_DATA_ADDRESS()); }
+      void MOV_R1_data_addr_A9() { DBG_P_DA() RD_ADDRESS() MOV(GET_REG(1), *GET_DATA_ADDRESS()); }
+      void MOV_R2_data_addr_AA() { DBG_P_DA() RD_ADDRESS() MOV(GET_REG(2), *GET_DATA_ADDRESS()); }
+      void MOV_R3_data_addr_AB() { DBG_P_DA() RD_ADDRESS() MOV(GET_REG(3), *GET_DATA_ADDRESS()); }
+      void MOV_R4_data_addr_AC() { DBG_P_DA() RD_ADDRESS() MOV(GET_REG(4), *GET_DATA_ADDRESS()); }
+      void MOV_R5_data_addr_AD() { DBG_P_DA() RD_ADDRESS() MOV(GET_REG(5), *GET_DATA_ADDRESS()); }
+      void MOV_R6_data_addr_AE() { DBG_P_DA() RD_ADDRESS() MOV(GET_REG(6), *GET_DATA_ADDRESS()); }
+      void MOV_R7_data_addr_AF() { DBG_P_DA() RD_ADDRESS() MOV(GET_REG(7), *GET_DATA_ADDRESS()); }
 
 
       void MOV_A_data_addr_E5() { RD_ADDRESS() MOV(A_REG, *GET_DATA_ADDRESS()); }
