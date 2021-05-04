@@ -5,6 +5,7 @@
 #include <fstream>
 #include <memory>
 
+#include "config.hpp"
 #include "types.hpp"
 #include "opcode_handler.hpp"
 
@@ -16,6 +17,11 @@
 namespace emu
 {
   class OpcodeHandler;
+  enum TimerMode {
+
+  };
+
+  typedef void (Emulator::*timer_jp_table_entry_t)(uint8_t*, uint8_t);
 
   class Emulator
   {
@@ -32,9 +38,15 @@ namespace emu
       void init();
       void handleInterrupts();
       void readFile(const std::string& filename);
+      inline void handleTimer(uint8_t* address);
 
+      void timer_mode_00(uint8_t *timer, uint8_t mask);
+      void timer_mode_01(uint8_t *timer, uint8_t mask);
+      void timer_mode_10(uint8_t *timer, uint8_t mask);
+      void timer_mode_11(uint8_t *timer, uint8_t mask);
 
     private:
+      timer_jp_table_entry_t m_jpTable[4];
       std::unique_ptr<OpcodeHandler> m_opHandler;
       state_t m_state;
   };

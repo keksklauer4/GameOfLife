@@ -13,6 +13,15 @@ using namespace emu;
     std::cout << std::endl;           \
   }
 
+#define TMOD() (*m_state.regs.TMOD)
+#define TCON() (*m_state.regs.TCON)
+#define IE() (*m_state.regs.IE)
+#define GET_TIMER0_MODE() (TMOD() & 0x03)
+#define GET_TIMER1_MODE() ((TMOD() & 0x30) >> 4)
+#define CHECK_TIMER0_ON() ((TCON() & 0x10) != 0)
+#define CHECK_TIMER1_ON() ((TCON() & 0x40) != 0)
+#define SET_INTERRUPT(mask) *(m_state.regs.TCON) |= mask
+
 Emulator::Emulator()
 {
   m_state.program_memory = new uint8_t[MEM_SIZE];
@@ -20,8 +29,11 @@ Emulator::Emulator()
   m_state.internal_data = new uint8_t[INTERNAL_MEM_SIZE];
   m_state.sfr_memory = new uint8_t[SFR_MEM_SIZE];
   m_opHandler = std::make_unique<OpcodeHandler>(m_state);
+  m_jpTable[0] = &Emulator::timer_mode_00;
+  m_jpTable[1] = &Emulator::timer_mode_01;
+  m_jpTable[2] = &Emulator::timer_mode_10;
+  m_jpTable[3] = &Emulator::timer_mode_11;
 }
-
 
 Emulator::~Emulator()
 {
@@ -41,6 +53,8 @@ void Emulator::setup(const std::string& filename)
 void Emulator::step()
 {
   m_opHandler->execOpcode();
+  TIMER0(if (CHECK_TIMER0_ON()){ (*this.*(m_jpTable[GET_TIMER0_MODE()]))(m_state.regs.TL0, 0x80); })
+  TIMER1(if (CHECK_TIMER1_ON()){ (*this.*(m_jpTable[GET_TIMER1_MODE()]))(m_state.regs.TL1, 0x20); })
   handleInterrupts();
 }
 
@@ -49,7 +63,6 @@ void Emulator::triggerExternalInterrupt()
 {
 
 }
-
 
 void Emulator::init()
 {
@@ -65,7 +78,9 @@ void Emulator::init()
 
 void Emulator::handleInterrupts()
 {
-
+  if (IE() & 0x80 == 0 || IE() & 0x1F) return; // either interrupt disabled or no interrupt enabled
+  uint8_t ints = TCON() & 0xAA;
+  if (ints == 0) return;
 }
 
 
@@ -87,4 +102,75 @@ void Emulator::readFile(const std::string& filename)
   binary.read((char*)m_state.program_memory, length);
   binary.close();
   PRINT_MEM(length, m_state.program_memory)
+}
+
+void Emulator::timer_mode_00(uint8_t *timer, uint8_t mask)
+{
+  uuint16_t timer_val;
+  timer_val.v8[0] = *timer & 0x1F; // mask away upper 3 bit
+  timer_val.v8[1] = *(timer + 2);
+  uint16_t old = timer_val.v16;
+  timer_val.v8[0] += m_state.last_opcode;
+
+  if (timer_val.v8[0] & 0xE0 != 0)
+  {
+    timer_val.v8[0] &= 0x1F;
+    timer_val.v8[1]++;
+  }
+
+  if (timer_val.v16 < old) // overflow
+  {
+    SET_INTERRUPT(mask);
+  }
+
+  *timer = timer_val.v8[0];
+  *(timer + 2) = timer_val.v8[1];
+}
+
+void Emulator::timer_mode_01(uint8_t *timer, uint8_t mask)
+{
+  uuint16_t timer_val;
+  timer_val.v8[0] = *timer;
+  timer_val.v8[1] = *(timer + 2);
+  uint16_t old = timer_val.v16;
+  timer_val.v16 += m_state.last_opcode;
+  if (timer_val.v16 < old) // overflow
+  {
+    SET_INTERRUPT(mask);
+  }
+  *timer = timer_val.v8[0];
+  *(timer + 2) = timer_val.v8[1];
+}
+
+void Emulator::timer_mode_10(uint8_t *timer, uint8_t mask)
+{
+  uint8_t tl = *timer;
+  uint8_t old = tl;
+  tl += m_state.last_opcode;
+  if (tl < old) // overflow
+  {
+    *timer = *(timer + 2) + tl;
+    SET_INTERRUPT(mask);
+  }
+}
+
+void Emulator::timer_mode_11(uint8_t *timer, uint8_t mask)
+{
+  if (timer == m_state.regs.TL1) return;
+  uint8_t tim = *timer;
+  uint8_t old = tim;
+  tim += m_state.last_opcode;
+  if (tim < old)
+  {
+    SET_INTERRUPT(mask);
+  }
+  *timer = tim;
+  tim = *(timer + 2);
+  old = tim;
+  tim += m_state.last_opcode;
+  if (tim < old)
+  {
+    SET_INTERRUPT(mask);
+  }
+  *(timer + 2) = tim;
 }

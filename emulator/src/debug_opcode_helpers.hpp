@@ -4,9 +4,8 @@
 #include <map>
 #include <cinttypes>
 
+#include "config.hpp"
 #include "opcode_parse_helpers.hpp"
-
-#define __DEBUG__ 1
 
 #if __DEBUG__ == 1
 #define DEBUG(content) content

@@ -30,11 +30,11 @@
 namespace emu
 {
   typedef uint32_t fuint32_t;
-  union uint16_union_t
+  typedef union uint16_union_t
   {
     uint16_t v16;
     uint8_t v8[2];
-  };
+  } uuint16_t;
 
   typedef struct Registers
   {
@@ -118,8 +118,8 @@ namespace emu
     uint8_t *internal_data;
     uint8_t *sfr_memory;
     registers_t regs;
+    uint8_t last_opcode;
   } state_t;
-
 }
 
 #endif
