@@ -61,13 +61,16 @@
 #define DBG_P_IMM() DEBUG(DBG_IMMEDIATE(0))
 #define DBG_P_IMM_REL() DEBUG(DBG_IMMEDIATE(0) DBG_COMMA() DBG_REL_CODE(1))
 #define DBG_P_DA() DEBUG(DBG_DATA_ADDR(0))
+#define DBG_AJMP() DEBUG(OS_OBJ << HEX() << CAST((AJMP_BITS(m_opcode >> 5)) | ((uint16_t)READ_BYTE_OFFSET(0)) | ((PC_REG + 1) & 0xF800)) << std::endl;)
+#define DBG_ACALL() DBG_AJMP()
+#define DBG_2B_ADDR() DEBUG(OS_OBJ << HEX() << CAST(BSWAP16(DBG_2B_IMM())) << std::endl;)
 
 
-#define CAST(v) static_cast<unsigned int>(v)
 #define PRINT_REG_DEBUG() DEBUG(std::cout << "Printing Register Debug: " \
   << "A: " << CAST(*A_REG) << "\t B: " << CAST(*B_REG) \
   << "\t R0:" << CAST(*GET_REG(0)) << "\t R1:" << CAST(*GET_REG(1)) << std::endl; \
-  std::cout << "PC: 0x" << PC_REG << std::endl;)
+  std::cout << "PSW: 0b" << std::bitset<8>{*m_state.regs.PSW} << std::endl;      \
+  std::cout << "PC: 0x" << (PC_REG - 1) << std::endl;)
 
 
 static std::map<uint8_t, std::string> bit_addressable_map{

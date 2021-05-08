@@ -26,6 +26,7 @@
 #define SBUF_OFFSET 0x99 - SFR_MEM_OFFSET
 #define PCON_OFFSET 0x87 - SFR_MEM_OFFSET
 
+#define CAST(v) static_cast<unsigned int>(v)
 
 namespace emu
 {

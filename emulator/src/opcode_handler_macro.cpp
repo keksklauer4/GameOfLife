@@ -9,45 +9,56 @@ void OpcodeHandler::ACALL(uint16_t upper_bits)
 {
   DBG_CODE_ADDR_ABS(upper_bits)
   upper_bits |= READ_BYTE_PC();
-  CALL_LOC(upper_bits);
+  ACALL_LOC(upper_bits);
 }
 
+#define MASKED_ADDITION(mask) (a_reg & mask) + (value & mask)
 void OpcodeHandler::ADD(uint8_t value)
 {
   const fuint32_t a_reg = *A_REG;
-  fuint32_t a = a_reg;
-  a += value;
-  bool overflow = (a & 0xFF00) != 0; // boolean that will be used for setting overflow
-  CARRY_CONDITIONAL(overflow) // TODO: change order
-  a = (a_reg & 0x0F) + (value & 0x0F);
-  AUX_CARRY_CONDITIONAL((a & 0x0F) != 0)
-  a = (a_reg & 0x7F) + (value & 0x7F);
-  overflow ^= ((a & 0x80) != 0);
-  OV_CONDITIONAL(overflow)
-  *A_REG += value;
+
+  // handle aux carry flag
+  fuint32_t res = MASKED_ADDITION(0x0F);
+  AUX_CARRY_CONDITIONAL((res & 0xF0) != 0)
+
+  // handle carry flag
+  res = a_reg + value;
+  bool carry = (res & 0xFF00) != 0;
+  CARRY_CONDITIONAL(carry)
+  *A_REG = res & 0xFF;
+
+  // handle overflow flag
+  res = MASKED_ADDITION(0x7F);
+  carry ^= ((res & 0x80) != 0);
+  OV_CONDITIONAL(carry)
 }
 
 void OpcodeHandler::ADDC(uint8_t value)
 {
-  const uint8_t carry = GET_CARRY();
+  if (GET_CARRY_NO_SHIFT() == 0) { return ADD(value); }
   const fuint32_t a_reg = *A_REG;
-  fuint32_t a = a_reg;
-  a += value + carry;
-  bool overflow = (a & 0xFF00) != 0; // boolean that will be used for setting overflow
-  CARRY_CONDITIONAL(overflow) // TODO: change order
-  a = (a_reg & 0x0F) + (value & 0x0F) + carry;
-  AUX_CARRY_CONDITIONAL((a & 0x0F) != 0)
-  a = (a_reg & 0x7F) + (value & 0x7F) + carry;
-  overflow ^= ((a & 0x80) != 0);
-  OV_CONDITIONAL(overflow)
-  *A_REG += value + carry;
+
+  // handle aux carry flag
+  fuint32_t res = MASKED_ADDITION(0x0F) + 1;
+  AUX_CARRY_CONDITIONAL((res & 0xF0) != 0)
+
+  // handle carry flag
+  res = a_reg + value + 1;
+  bool carry = (res & 0xFF00) != 0;
+  CARRY_CONDITIONAL(carry)
+  *A_REG = res & 0xFF;
+
+  // handle overflow flag
+  res = MASKED_ADDITION(0x7F) + 1;
+  carry ^= ((res & 0x80) != 0);
+  OV_CONDITIONAL(carry)
 }
 
 void OpcodeHandler::AJMP(uint16_t upper_bits)
 {
   DBG_CODE_ADDR_ABS(upper_bits)
   upper_bits |= READ_BYTE_PC();
-  JUMP_LOC(upper_bits);
+  AJMP_LOC(upper_bits);
 }
 
 void OpcodeHandler::ANL_BYTE(uint8_t* dest, uint8_t value)
@@ -75,6 +86,7 @@ void OpcodeHandler::CLR_A()
 
 void OpcodeHandler::CLR_bit()
 {
+  DBG_P_BA()
   CLR_BIT_ADDRESSABLE();
 }
 
@@ -89,6 +101,7 @@ void OpcodeHandler::CPL_A()
 }
 void OpcodeHandler::CPL_bit()
 {
+  DBG_P_BA()
   CPL_BIT_ADDRESSABLE();
 }
 
@@ -195,13 +208,16 @@ void OpcodeHandler::JZ()
 
 void OpcodeHandler::LCALL()
 {
+  DBG_2B_ADDR()
   auto addr = READ_2BYTE_PC_BIG_ENDIAN();
   CALL_LOC(addr)
 }
 
 void OpcodeHandler::LJMP()
 {
-  m_state.regs.PC = READ_2BYTE_PC_BIG_ENDIAN();
+  DBG_2B_ADDR()
+  uint16_t newPC = READ_2BYTE_PC_BIG_ENDIAN();
+  PC_REG = newPC;
 }
 
 void OpcodeHandler::MOV(uint8_t* dest, uint8_t val)
@@ -210,7 +226,7 @@ void OpcodeHandler::MOV(uint8_t* dest, uint8_t val)
 }
 
 void OpcodeHandler::MOV_to_C()
-{ // TODO: offset of 4K?
+{
   const fuint32_t byte = READ_BYTE_PC();
   CARRY_CONDITIONAL(CHECK_BIT_ADDRESSABLE_SET(byte) != 0)
 }
@@ -311,19 +327,35 @@ void OpcodeHandler::SETB_C()
 
 void OpcodeHandler::SETB_bit()
 {
+  DBG_P_BA()
   SET_BIT_ADDRESSABLE();
 }
 
 void OpcodeHandler::SJMP()
 {
+  DBG_P_REL()
   int8_t offset = (int8_t)READ_BYTE_PC();
   JUMP_REL(offset);
 }
 
-void OpcodeHandler::SUBB(uint8_t val)
-{ // TODO
+void OpcodeHandler::SUBB(uint16_t val)
+{
   val += GET_CARRY();
-  //if (*A_REG > )
+
+  // for auxilary carry flag checking
+  uint16_t res = ((*A_REG) & 0x0F) - (val & 0xF);
+  AUX_CARRY_CONDITIONAL((res & 0xFFF0) != 0)
+
+  // for overflow checking
+  res = ((*A_REG) & 0x7F) - (val & 0x7F);
+  bool overflow = (res & 0xFF80) != 0;
+
+  // actual calculation (carry and overflow)
+  res = (*A_REG) - val;
+  *A_REG = (res & 0xFF);
+  bool carry = (res & 0xFF00) != 0;
+  CARRY_CONDITIONAL(carry)
+  if (carry ^ overflow){ SET_OV(); }
 }
 
 void OpcodeHandler::SWAP()

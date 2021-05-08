@@ -21,6 +21,7 @@ namespace emu
       OpcodeHandler(state_t& state): m_state(state){ init(); }
 
       void execOpcode();
+      void jumpInterrupt(uint16_t address);
 
     private:
       void init();
@@ -81,7 +82,7 @@ namespace emu
       void SETB_C();
       void SETB_bit();
       void SJMP();
-      void SUBB(uint8_t val);
+      void SUBB(uint16_t val);
       void SWAP();
       void XCH(uint8_t* address);
       void XCHD(uint8_t* address);
@@ -89,14 +90,14 @@ namespace emu
 
       // actual jump table entries
 
-      void AJMP_01() { AJMP(AJMP_BITS(0b000)); }
-      void AJMP_21() { AJMP(AJMP_BITS(0b001)); }
-      void AJMP_41() { AJMP(AJMP_BITS(0b010)); }
-      void AJMP_61() { AJMP(AJMP_BITS(0b011)); }
-      void AJMP_81() { AJMP(AJMP_BITS(0b100)); }
-      void AJMP_A1() { AJMP(AJMP_BITS(0b101)); }
-      void AJMP_C1() { AJMP(AJMP_BITS(0b110)); }
-      void AJMP_E1() { AJMP(AJMP_BITS(0b111)); }
+      void AJMP_01() { DBG_AJMP() AJMP(AJMP_BITS(0b000)); }
+      void AJMP_21() { DBG_AJMP() AJMP(AJMP_BITS(0b001)); }
+      void AJMP_41() { DBG_AJMP() AJMP(AJMP_BITS(0b010)); }
+      void AJMP_61() { DBG_AJMP() AJMP(AJMP_BITS(0b011)); }
+      void AJMP_81() { DBG_AJMP() AJMP(AJMP_BITS(0b100)); }
+      void AJMP_A1() { DBG_AJMP() AJMP(AJMP_BITS(0b101)); }
+      void AJMP_C1() { DBG_AJMP() AJMP(AJMP_BITS(0b110)); }
+      void AJMP_E1() { DBG_AJMP() AJMP(AJMP_BITS(0b111)); }
 
       void INC_A_04() { INC(A_REG); }
       void INC_data_addr_05() { DBG_P_DA() RD_ADDRESS() INC(GET_DATA_ADDRESS()); }
@@ -124,14 +125,14 @@ namespace emu
       void DEC_R6_1E() { DEC(GET_REG(6)); }
       void DEC_R7_1F() { DEC(GET_REG(7)); }
 
-      void ACALL_11() { ACALL(AJMP_BITS(0b000)); }
-      void ACALL_31() { ACALL(AJMP_BITS(0b001)); }
-      void ACALL_51() { ACALL(AJMP_BITS(0b010)); }
-      void ACALL_71() { ACALL(AJMP_BITS(0b011)); }
-      void ACALL_91() { ACALL(AJMP_BITS(0b100)); }
-      void ACALL_B1() { ACALL(AJMP_BITS(0b101)); }
-      void ACALL_D1() { ACALL(AJMP_BITS(0b110)); }
-      void ACALL_F1() { ACALL(AJMP_BITS(0b111)); }
+      void ACALL_11() { DBG_ACALL() ACALL(AJMP_BITS(0b000)); }
+      void ACALL_31() { DBG_ACALL() ACALL(AJMP_BITS(0b001)); }
+      void ACALL_51() { DBG_ACALL() ACALL(AJMP_BITS(0b010)); }
+      void ACALL_71() { DBG_ACALL() ACALL(AJMP_BITS(0b011)); }
+      void ACALL_91() { DBG_ACALL() ACALL(AJMP_BITS(0b100)); }
+      void ACALL_B1() { DBG_ACALL() ACALL(AJMP_BITS(0b101)); }
+      void ACALL_D1() { DBG_ACALL() ACALL(AJMP_BITS(0b110)); }
+      void ACALL_F1() { DBG_ACALL() ACALL(AJMP_BITS(0b111)); }
 
       void ADD_data_24() { DBG_P_IMM() ADD(IMMEDIATE()); }
       void ADD_data_addr_25() { DBG_P_DA() RD_ADDRESS() ADD(*GET_DATA_ADDRESS()); }

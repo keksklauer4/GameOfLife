@@ -31,4 +31,8 @@
 #define INTERRUPT(content)
 #endif
 
+// compiler/architecture specifics
+#define POPCOUNT(val) __builtin_popcount(val)
+#define BSWAP16(v) __builtin_bswap16(v)
+
 #endif

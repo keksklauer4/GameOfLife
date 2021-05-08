@@ -1,6 +1,8 @@
 #ifndef EMU_OPCODE_PARSE_MACROS_HPP
 #define EMU_OPCODE_PARSE_MACROS_HPP
 
+#include "types.hpp"
+
 #define A_REG m_state.regs.A
 #define B_REG m_state.regs.B
 #define DPTR_REG m_state.regs.DPTR

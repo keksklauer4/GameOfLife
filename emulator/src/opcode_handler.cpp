@@ -1,4 +1,8 @@
 #include "opcode_handler.hpp"
+#include "opcode_macros.hpp"
+
+#define HANDLE_PARITY_BIT() if ((POPCOUNT(*A_REG) & 0x01) != 0){ *m_state.regs.PSW |= 0x01; } else { *m_state.regs.PSW &= 0xFE; }
+
 
 using namespace emu;
 
@@ -7,9 +11,20 @@ void OpcodeHandler::execOpcode()
   m_opcode = READ_BYTE_PC();
   DEBUG(std::cout << "Opcode to execute: " << std::hex <<
     static_cast<unsigned int>(m_opcode) << std::endl;)
+  HANDLE_PARITY_BIT()
   PRINT_REG_DEBUG()
   DBG_PRINT_OPCODE()
+  m_state.last_opcode = 1; // TODO
   (*this.*(m_jpTable[m_opcode]))();
+  DEBUG(std::cout << std::endl;)
+  char c = getchar();
+}
+
+void OpcodeHandler::jumpInterrupt(uint16_t address)
+{
+  DEBUG(std::cout << "Interrupt at 0x" << std::hex << address << std::endl;)
+  CALL_LOC(address);
+  STOP_IDLE_MODE(); // interrupts reset idle mode bit
 }
 
 void OpcodeHandler::init()

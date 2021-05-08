@@ -4,11 +4,10 @@
 #include "opcode_parse_helpers.hpp"
 
 
-#define BSWAP16(v) __builtin_bswap16(v)
 
-#define READ_2BYTE_PC_BIG_ENDIAN()                                \
+#define READ_2BYTE_PC_BIG_ENDIAN()                           \
   BSWAP16(*((uint16_t*)(m_state.program_memory + PC_REG)));  \
-  m_state.regs.PC+=2
+  PC_REG+=2
 
 #define POP_FROM_STACK()            \
   m_state.internal_data[DEC_SP()]
@@ -27,22 +26,30 @@
   PC_REG |= POP_FROM_STACK()
 
 
-#define JUMP_REL(offset) m_state.regs.PC += (int8_t)offset
+#define JUMP_REL(offset) PC_REG += (int8_t)offset
 
-#define JUMP_LOC(addr) m_state.regs.PC = addr
+#define JUMP_LOC(addr) PC_REG = addr
+#define AJMP_LOC(addr) PC_REG &= 0xF800; PC_REG |= addr
+
 #define CALL_LOC(addr)              \
   WRITE_STACK_2B(m_state.regs.PC);  \
   JUMP_LOC(addr);
+
+#define ACALL_LOC(addr)              \
+  WRITE_STACK_2B(m_state.regs.PC);  \
+  AJMP_LOC(addr);
 
 #define RESET_CARRY() *m_state.regs.PSW &= 0x7F
 #define SET_CARRY()   *m_state.regs.PSW |= 0x80
 #define CPL_CARRY()   *m_state.regs.PSW ^= 0x80
 
-#define RESET_AUX_CARRY() *m_state.regs.PSW &= 0x10111111
-#define SET_AUX_CARRY()   *m_state.regs.PSW |= 0x01000000
+#define RESET_AUX_CARRY() *m_state.regs.PSW &= 0b10111111
+#define SET_AUX_CARRY()   *m_state.regs.PSW |= 0b01000000
 
 #define RESET_OV() *m_state.regs.PSW &= 0b11111011
 #define SET_OV()   *m_state.regs.PSW |= 0b00000100
+
+#define STOP_IDLE_MODE() *m_state.regs.PCON &= 0b11111110
 
 #define GET_CARRY_NO_SHIFT() (*m_state.regs.PSW & 0x80)
 #define GET_CARRY() (*m_state.regs.PSW) >> 7

@@ -7,9 +7,12 @@
 using namespace emu;
 int main()
 {
-  std::cout << "hi" << std::endl;
-  std::string filename = "../test/main.bin";
-  Emulator emu;
+  std::string filename = "../test/test.bin";
+  auto lambda = std::function<void(state_t&)>([](state_t& s)
+    {
+      //std::cout << "PORT0: " << std::hex << static_cast<unsigned int>(*(s.regs.P0)) << std::endl;
+  });
+  Emulator emu(lambda);
   emu.setup(filename);
 
   using namespace std::chrono;

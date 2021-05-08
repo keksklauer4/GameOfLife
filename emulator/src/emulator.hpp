@@ -4,6 +4,8 @@
 #include <cstring>
 #include <fstream>
 #include <memory>
+#include <functional>
+#include <bitset>
 
 #include "config.hpp"
 #include "types.hpp"
@@ -21,17 +23,19 @@ namespace emu
 
   };
 
+  class Emulator;
   typedef void (Emulator::*timer_jp_table_entry_t)(uint8_t*, uint8_t);
 
   class Emulator
   {
     public:
-      Emulator();
+      Emulator(std::function<void(state_t&)> stepCallback);
       ~Emulator();
 
       void step();
       void setExternalMemory(uint8_t* address);
-      void triggerExternalInterrupt();
+      void triggerExternalInterrupt0();
+      void triggerExternalInterrupt1();
       void setup(const std::string& filename);
 
     private:
@@ -46,6 +50,7 @@ namespace emu
       void timer_mode_11(uint8_t *timer, uint8_t mask);
 
     private:
+      std::function<void(state_t&)> m_stepCallback;
       timer_jp_table_entry_t m_jpTable[4];
       std::unique_ptr<OpcodeHandler> m_opHandler;
       state_t m_state;
