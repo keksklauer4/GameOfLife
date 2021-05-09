@@ -13,7 +13,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: navigate to correct path
-      run: cd emulator
     - name: make
-      run: make
+      run: cd emulator
+        make
