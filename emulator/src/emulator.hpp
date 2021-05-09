@@ -37,6 +37,7 @@ namespace emu
       void triggerExternalInterrupt0();
       void triggerExternalInterrupt1();
       void setup(const std::string& filename);
+      const state_t& getState() const { return m_state; }
 
     private:
       void init();

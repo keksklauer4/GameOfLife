@@ -111,6 +111,7 @@ namespace emu
       *regs.SCON = 0x00;
       *regs.SBUF = 0x00; // should be indeterminate but who cares
       *regs.PCON = 0x00;
+      cycles_passed = 0;
     }
 
 
@@ -120,6 +121,7 @@ namespace emu
     uint8_t *sfr_memory;
     registers_t regs;
     uint8_t last_opcode;
+    uint64_t cycles_passed;
   } state_t;
 }
 

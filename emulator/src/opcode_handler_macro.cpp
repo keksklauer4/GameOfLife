@@ -56,7 +56,6 @@ void OpcodeHandler::ADDC(uint8_t value)
 
 void OpcodeHandler::AJMP(uint16_t upper_bits)
 {
-  DBG_CODE_ADDR_ABS(upper_bits)
   upper_bits |= READ_BYTE_PC();
   AJMP_LOC(upper_bits);
 }

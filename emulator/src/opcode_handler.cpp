@@ -14,10 +14,11 @@ void OpcodeHandler::execOpcode()
   HANDLE_PARITY_BIT()
   PRINT_REG_DEBUG()
   DBG_PRINT_OPCODE()
-  m_state.last_opcode = 1; // TODO
   (*this.*(m_jpTable[m_opcode]))();
+  m_state.last_opcode = cycles[m_opcode];
+  m_state.cycles_passed += m_state.last_opcode;
   DEBUG(std::cout << std::endl;)
-  char c = getchar();
+  DEBUG(char c = getchar();)
 }
 
 void OpcodeHandler::jumpInterrupt(uint16_t address)
@@ -25,6 +26,11 @@ void OpcodeHandler::jumpInterrupt(uint16_t address)
   DEBUG(std::cout << "Interrupt at 0x" << std::hex << address << std::endl;)
   CALL_LOC(address);
   STOP_IDLE_MODE(); // interrupts reset idle mode bit
+}
+
+void OpcodeHandler::RESERVED_OPCODE()
+{
+  THROW_EXCEPTION(throw std::runtime_error("Next opcode is <reserved> which should not happen!");)
 }
 
 void OpcodeHandler::init()
@@ -194,7 +200,7 @@ void OpcodeHandler::init()
   m_jpTable[0xA2] = &OpcodeHandler::MOV_to_C;
   m_jpTable[0xA3] = &OpcodeHandler::INC_DPTR;
   m_jpTable[0xA4] = &OpcodeHandler::MUL;
-  m_jpTable[0xA5] = &OpcodeHandler::NOP; // TODO: handle reserved opcode!
+  m_jpTable[0xA5] = &OpcodeHandler::RESERVED_OPCODE;
   m_jpTable[0xA6] = &OpcodeHandler::MOV_at_R0_data_addr_A6;
   m_jpTable[0xA7] = &OpcodeHandler::MOV_at_R1_data_addr_A7;
   m_jpTable[0xA8] = &OpcodeHandler::MOV_R0_data_addr_A8;

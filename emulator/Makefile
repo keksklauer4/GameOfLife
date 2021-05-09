@@ -1,4 +1,4 @@
-CPPFLAGS=-g -I src/ -std=c++17 -Wall -Wextra -pedantic-errors
+CPPFLAGS=-g -I src/ -std=c++17 -O3
 LDFLAGS=-g -L/usr/local/lib
 LDLIBS=-L/usr/local/lib
 

@@ -33,6 +33,7 @@ namespace emu
 
     private: // macro functions
       void NOP();
+      void RESERVED_OPCODE();
       void ACALL(uint16_t upper_bits);
       void ADD(uint8_t value);
       void ADDC(uint8_t value);

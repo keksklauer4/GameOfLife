@@ -2,11 +2,12 @@
 #define EMU_CONFIG_HPP
 
 
-// configure these macros. 0
-#define __DEBUG__ 1
+// configure these macros.
+#define __DEBUG__ 0
 #define __ENABLE_TIMER_0__ 1
 #define __ENABLE_TIMER_1__ 1
 #define __ENABLE_INTERRUPTS__ 1
+#define __THROW_EXCEPTION_ON_ERRONEOUS_STATE__ 1
 
 
 
@@ -29,6 +30,12 @@
 #define INTERRUPT(content) content
 #else
 #define INTERRUPT(content)
+#endif
+
+#if __THROW_EXCEPTION_ON_ERRONEOUS_STATE__ == 1
+#define THROW_EXCEPTION(content) content
+#else
+#define THROW_EXCEPTION(content)
 #endif
 
 // compiler/architecture specifics
