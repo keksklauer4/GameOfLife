@@ -1,0 +1,640 @@
+#ifndef DEBUG_OPCODE_HELPERS_HPP
+#define DEBUG_OPCODE_HELPERS_HPP
+#include <string>
+#include <map>
+#include <cinttypes>
+
+#include "config.hpp"
+#include "opcode_parse_helpers.hpp"
+
+#if __DEBUG__ == 1
+#define DEBUG(content) content
+#else
+#define DEBUG(content)
+#endif
+
+#define OS_OBJ std::cout
+
+#define DBG_PRINT_OPCODE()  \
+  DEBUG(OS_OBJ << mnemonics[m_opcode]);
+
+#define READ_BYTE_OFFSET(offset)  \
+  (m_state.program_memory[(uint16_t)(PC_REG + offset)])
+#define READ_SIGNED_OFFSET(offset)  \
+  (*((int8_t*)(m_state.program_memory + (uint16_t)(PC_REG + offset))))
+
+#define BIT_ADDRESS_OFFSET(offset) (READ_BYTE_OFFSET(offset) & 0xF8) << "." << (READ_BYTE_OFFSET(offset) & 0x07)
+#define ADDRESS_OFFSET(offset) static_cast<int>(READ_BYTE_OFFSET(offset))
+#define DBG_2B_IMM() (*(uint16_t*)(m_state.program_memory + PC_REG))
+#define PC_REL_POS(offset) ((uint16_t)(PC_REG + offset + 1 + ((int)READ_BYTE_OFFSET(offset))))
+
+#define HEX() "0x" << std::hex
+#define DECI() std::dec
+
+#define DBG_BIT_ADDRESSABLE(offset)                                     \
+  auto v = READ_BYTE_OFFSET(offset);                                    \
+  auto it = bit_addressable_map.find(v & 0xF8);                         \
+  if (it == bit_addressable_map.end()){ OS_OBJ << HEX() << CAST(v&0xF8); }  \
+  else { OS_OBJ << it->second;}                                         \
+  OS_OBJ << "." << (v&0x7);
+
+#define DBG_IMMEDIATE(offset)                     \
+  OS_OBJ << "#" << DECI() << CAST(READ_BYTE_OFFSET(offset));
+
+#define DBG_REL_CODE(offset)                                    \
+  OS_OBJ << HEX() << CAST(PC_REG + 1 + READ_SIGNED_OFFSET(offset));
+
+#define DBG_COMMA() OS_OBJ << ", ";
+
+#define DBG_DATA_ADDR(offset)                   \
+  OS_OBJ << HEX() << CAST(READ_BYTE_OFFSET(offset));
+
+#define DBG_CODE_ADDR(offset)                   \
+  OS_OBJ << HEX() << CAST(READ_BYTE_OFFSET(offset));
+
+#define DBG_CODE_ADDR_ABS(bitmask)                   \
+  OS_OBJ << HEX() << CAST(bitmask | READ_BYTE_OFFSET(0));
+
+#define DBG_P_REL() DEBUG(DBG_REL_CODE(0))
+#define DBG_P_BA() DEBUG(DBG_BIT_ADDRESSABLE(0))
+#define DBG_P_BA_REL() DEBUG(DBG_BIT_ADDRESSABLE(0) DBG_COMMA() DBG_REL_CODE(1))
+#define DBG_P_IMM() DEBUG(DBG_IMMEDIATE(0))
+#define DBG_P_IMM_REL() DEBUG(DBG_IMMEDIATE(0) DBG_COMMA() DBG_REL_CODE(1))
+#define DBG_P_DA() DEBUG(DBG_DATA_ADDR(0))
+#define DBG_AJMP() DEBUG(OS_OBJ << HEX() << CAST((AJMP_BITS(m_opcode >> 5)) | ((uint16_t)READ_BYTE_OFFSET(0)) | ((PC_REG + 1) & 0xF800)) << std::endl;)
+#define DBG_ACALL() DBG_AJMP()
+#define DBG_2B_ADDR() DEBUG(OS_OBJ << HEX() << CAST(BSWAP16(DBG_2B_IMM())) << std::endl;)
+
+
+#define PRINT_REG_DEBUG() DEBUG(std::cout << "Printing Register Debug: " \
+  << "A: " << CAST(*A_REG) << "\t B: " << CAST(*B_REG) \
+  << "\t R0:" << CAST(*GET_REG(0)) << "\t R1:" << CAST(*GET_REG(1)) << std::endl; \
+  std::cout << "PSW: 0b" << std::bitset<8>{*m_state.regs.PSW} << std::endl;      \
+  std::cout << "PC: 0x" << (PC_REG - 1) << std::endl;)
+
+
+static std::map<uint8_t, std::string> bit_addressable_map{
+  { 0x80, "P0" },
+  { 0x88, "TCON" },
+  { 0x90, "P1" },
+  { 0x98, "SCON" },
+  { 0xA0, "P2" },
+  { 0xA8, "IE" },
+  { 0xB0, "P3" },
+  { 0xB8, "IP" },
+  { 0xC8, "T2CON" },
+  { 0xD0, "PSW" },
+  { 0xE0, "ACC" },
+  { 0xF0, "B" }
+};
+
+static std::string mnemonics[] = {
+  "NOP",        // 0x00
+  "AJMP ",      // 0x01
+  "LJMP ",      // 0x02
+  "RR A",       // 0x03
+  "INC A",      // 0x04
+  "INC ",       // 0x05
+  "INC @R0",   // 0x06
+  "INC @R1",   // 0x07
+  "INC R0",    // 0x08
+  "INC R1",    // 0x09
+  "INC R2",    // 0x0A
+  "INC R3",    // 0x0B
+  "INC R4",    // 0x0C
+  "INC R5",    // 0x0D
+  "INC R6",    // 0x0E
+  "INC R7",    // 0x0F
+
+  "JBC ",       // 0x10
+  "ACALL ",     // 0x11
+  "LCALL ",     // 0x12
+  "RRC A",     // 0x13
+  "DEC A",     // 0x14
+  "DEC ",       // 0x15
+  "DEC @R0",   // 0x16
+  "DEC @R1",   // 0x17
+  "DEC R0",    // 0x18
+  "DEC R1",    // 0x19
+  "DEC R2",    // 0x1A
+  "DEC R3",    // 0x1B
+  "DEC R4",    // 0x1C
+  "DEC R5",    // 0x1D
+  "DEC R6",    // 0x1E
+  "DEC R7",    // 0x1F
+
+  "JB ",       // 0x20
+  "AJMP ",     // 0x21
+  "RET",     // 0x22
+  "RL A",     // 0x23
+  "ADD A, ",     // 0x24
+  "ADD A, ",       // 0x25
+  "ADD A, @R0",   // 0x26
+  "ADD A, @R1",   // 0x27
+  "ADD A, R0",    // 0x28
+  "ADD A, R1",    // 0x29
+  "ADD A, R2",    // 0x2A
+  "ADD A, R3",    // 0x2B
+  "ADD A, R4",    // 0x2C
+  "ADD A, R5",    // 0x2D
+  "ADD A, R6",    // 0x2E
+  "ADD A, R7",    // 0x2F
+
+  "JNB ",       // 0x30
+  "ACALL ",     // 0x31
+  "RETI",     // 0x32
+  "RLC A",     // 0x33
+  "ADDC A, ",     // 0x34
+  "ADDC A, ",       // 0x35
+  "ADDC A, @R0",   // 0x36
+  "ADDC A, @R1",   // 0x37
+  "ADDC A, R0",    // 0x38
+  "ADDC A, R1",    // 0x39
+  "ADDC A, R2",    // 0x3A
+  "ADDC A, R3",    // 0x3B
+  "ADDC A, R4",    // 0x3C
+  "ADDC A, R5",    // 0x3D
+  "ADDC A, R6",    // 0x3E
+  "ADDC A, R7",    // 0x3F
+
+  "JC ",       // 0x40
+  "AJMP ",     // 0x41
+  "ORL ",     // 0x42
+  "ORL ",     // 0x43
+  "ORL A, ",     // 0x44
+  "ORL A, ",       // 0x45
+  "ORL A, @R0",   // 0x46
+  "ORL A, @R1",   // 0x47
+  "ORL A, R0",    // 0x48
+  "ORL A, R1",    // 0x49
+  "ORL A, R2",    // 0x4A
+  "ORL A, R3",    // 0x4B
+  "ORL A, R4",    // 0x4C
+  "ORL A, R5",    // 0x4D
+  "ORL A, R6",    // 0x4E
+  "ORL A, R7",    // 0x4F
+
+  "JNC ",       // 0x50
+  "ACALL ",     // 0x51
+  "ANL ",     // 0x52
+  "ANL ",     // 0x53
+  "ANL A, ",     // 0x54
+  "ANL A, ",       // 0x55
+  "ANL A, @R0",   // 0x56
+  "ANL A, @R1",   // 0x57
+  "ANL A, R0",    // 0x58
+  "ANL A, R1",    // 0x59
+  "ANL A, R2",    // 0x5A
+  "ANL A, R3",    // 0x5B
+  "ANL A, R4",    // 0x5C
+  "ANL A, R5",    // 0x5D
+  "ANL A, R6",    // 0x5E
+  "ANL A, R7",    // 0x5F
+
+  "JZ ",       // 0x60
+  "AJMP ",     // 0x61
+  "XRL ",     // 0x62
+  "XRL ",     // 0x63
+  "XRL A, ",     // 0x64
+  "XRL A, ",       // 0x65
+  "XRL A, @R0",   // 0x66
+  "XRL A, @R1",   // 0x67
+  "XRL A, R0",    // 0x68
+  "XRL A, R1",    // 0x69
+  "XRL A, R2",    // 0x6A
+  "XRL A, R3",    // 0x6B
+  "XRL A, R4",    // 0x6C
+  "XRL A, R5",    // 0x6D
+  "XRL A, R6",    // 0x6E
+  "XRL A, R7",    // 0x6F
+
+  "JNZ ",       // 0x70
+  "ACALL ",     // 0x71
+  "ORL C, ",     // 0x72
+  "JMP @A+DPTR",     // 0x73
+  "MOV A, ",     // 0x74
+  "MOV ",       // 0x75
+  "MOV @R0, ",   // 0x76
+  "MOV @R1, ",   // 0x77
+  "MOV R0, ",    // 0x78
+  "MOV R1, ",    // 0x79
+  "MOV R2, ",    // 0x7A
+  "MOV R3, ",    // 0x7B
+  "MOV R4, ",    // 0x7C
+  "MOV R5, ",    // 0x7D
+  "MOV R6, ",    // 0x7E
+  "MOV R7, ",    // 0x7F
+
+  "SJMP ",       // 0x80
+  "AJMP ",     // 0x81
+  "ANL C, ",     // 0x82
+  "MOVC A, @A+PC",     // 0x83
+  "DIV AB",     // 0x84
+  "MOV ",       // 0x85
+  "MOV ",   // 0x86
+  "MOV ",   // 0x87
+  "MOV ",    // 0x88
+  "MOV ",    // 0x89
+  "MOV ",    // 0x8A
+  "MOV ",    // 0x8B
+  "MOV ",    // 0x8C
+  "MOV ",    // 0x8D
+  "MOV ",    // 0x8E
+  "MOV ",    // 0x8F
+
+  "MOV DPTR, ",       // 0x90
+  "ACALL ",     // 0x91
+  "MOV ",     // 0x92
+  "MOVC A, @A+DPTR",     // 0x93
+  "SUBB A, ",     // 0x94
+  "SUBB A, ",       // 0x95
+  "SUBB A, @R0",   // 0x96
+  "SUBB A, @R1",   // 0x97
+  "SUBB A, R0",    // 0x98
+  "SUBB A, R1",    // 0x99
+  "SUBB A, R2",    // 0x9A
+  "SUBB A, R3",    // 0x9B
+  "SUBB A, R4",    // 0x9C
+  "SUBB A, R5",    // 0x9D
+  "SUBB A, R6",    // 0x9E
+  "SUBB A, R7",    // 0x9F
+
+  "ORL C, /",       // 0xA0
+  "AJMP ",       // 0xA1
+  "MOV C, ",     // 0xA2
+  "INC DPTR",    // 0xA3
+  "MUL AB",      // 0xA4
+  "<reserved>",  // 0xA5
+  "MOV @R0, ",   // 0xA6
+  "MOV @R1, ",   // 0xA7
+  "MOV R0, ",    // 0xA8
+  "MOV R1, ",    // 0xA9
+  "MOV R2, ",    // 0xAA
+  "MOV R3, ",    // 0xAB
+  "MOV R4, ",    // 0xAC
+  "MOV R5, ",    // 0xAD
+  "MOV R6, ",    // 0xAE
+  "MOV R7, ",    // 0xAF
+
+  "ANL C, /",     // 0xB0
+  "ACALL ",       // 0xB1
+  "CPL ",         // 0xB2
+  "CPL C",        // 0xB3
+  "CJNE A, ",     // 0xB4
+  "CJNE A, ",     // 0xB5
+  "CJNE @R0, ",   // 0xB6
+  "CJNE @R1, ",   // 0xB7
+  "CJNE R0, ",    // 0xB8
+  "CJNE R1, ",    // 0xB9
+  "CJNE R2, ",    // 0xBA
+  "CJNE R3, ",    // 0xBB
+  "CJNE R4, ",    // 0xBC
+  "CJNE R5, ",    // 0xBD
+  "CJNE R6, ",    // 0xBE
+  "CJNE R7, ",    // 0xBF
+
+  "PUSH ",        // 0xC0
+  "AJMP ",        // 0xC1
+  "CLR ",         // 0xC2
+  "CLR C",        // 0xC3
+  "SWAP A",       // 0xC4
+  "XCH A, ",      // 0xC5
+  "XCH A, @R0",   // 0xC6
+  "XCH A, @R1",   // 0xC7
+  "XCH A, R0",    // 0xC8
+  "XCH A, R1",    // 0xC9
+  "XCH A, R2",    // 0xCA
+  "XCH A, R3",    // 0xCB
+  "XCH A, R4",    // 0xCC
+  "XCH A, R5",    // 0xCD
+  "XCH A, R6",    // 0xCE
+  "XCH A, R7",    // 0xCF
+
+  "POP ",         // 0xD0
+  "ACALL ",       // 0xD1
+  "SETB ",        // 0xD2
+  "SETB C",       // 0xD3
+  "DA A",         // 0xD4
+  "DJNZ ",        // 0xD5
+  "XCHD A, @R0, ",// 0xD6
+  "XCHD A, @R1, ",// 0xD7
+  "DJNZ R0, ",    // 0xD8
+  "DJNZ R1, ",    // 0xD9
+  "DJNZ R2, ",    // 0xDA
+  "DJNZ R3, ",    // 0xDB
+  "DJNZ R4, ",    // 0xDC
+  "DJNZ R5, ",    // 0xDD
+  "DJNZ R6, ",    // 0xDE
+  "DJNZ R7, ",    // 0xDF
+
+  "MOVX A, @DPTR",       // 0xE0
+  "AJMP ",     // 0xE1
+  "MOVX A, @R0",     // 0xE2
+  "MOVX A, @R1",     // 0xE3
+  "CLR A",     // 0xE4
+  "MOV A, ",       // 0xE5
+  "MOV A, @R0",   // 0xE6
+  "MOV A, @R1",   // 0xE7
+  "MOV A, R0",    // 0xE8
+  "MOV A, R1",    // 0xE9
+  "MOV A, R2",    // 0xEA
+  "MOV A, R3",    // 0xEB
+  "MOV A, R4",    // 0xEC
+  "MOV A, R5",    // 0xED
+  "MOV A, R6",    // 0xEE
+  "MOV A, R7",    // 0xEF
+
+  "MOVX @DPTR, A",       // 0xF0
+  "ACALL ",     // 0xF1
+  "MOVX @R0, A",     // 0xF2
+  "MOVX @R1, A",     // 0xF3
+  "CPL A",     // 0xF4
+  "MOV ",       // 0xF5
+  "MOV @R0, A",   // 0xF6
+  "MOV @R1, A",   // 0xF7
+  "MOV R0, A",    // 0xF8
+  "MOV R1, A",    // 0xF9
+  "MOV R2, A",    // 0xFA
+  "MOV R3, A",    // 0xFB
+  "MOV R4, A",    // 0xFC
+  "MOV R5, A",    // 0xFD
+  "MOV R6, A",    // 0xFE
+  "MOV R7, A"    // 0xFF
+};
+
+static uint8_t cycles[] = {
+  1,  // 0x00
+  2,  // 0x01
+  2,  // 0x02
+  1,  // 0x03
+  1,  // 0x04
+  1,  // 0x05
+  1,  // 0x06
+  1,  // 0x07
+  1,  // 0x08
+  1,  // 0x09
+  1,  // 0x0A
+  1,  // 0x0B
+  1,  // 0x0C
+  1,  // 0x0D
+  1,  // 0x0E
+  1,  // 0x0F
+
+  2,  // 0x10
+  2,  // 0x11
+  2,  // 0x12
+  1,  // 0x13
+  1,  // 0x14
+  1,  // 0x15
+  1,  // 0x16
+  1,  // 0x17
+  1,  // 0x18
+  1,  // 0x19
+  1,  // 0x1A
+  1,  // 0x1B
+  1,  // 0x1C
+  1,  // 0x1D
+  1,  // 0x1E
+  1,  // 0x1F
+
+  2,  // 0x20
+  2,  // 0x21
+  2,  // 0x22
+  1,  // 0x23
+  1,  // 0x24
+  1,  // 0x25
+  1,  // 0x26
+  1,  // 0x27
+  1,  // 0x28
+  1,  // 0x29
+  1,  // 0x2A
+  1,  // 0x2B
+  1,  // 0x2C
+  1,  // 0x2D
+  1,  // 0x2E
+  1,  // 0x2F
+
+  2,  // 0x30
+  2,  // 0x31
+  2,  // 0x32
+  1,  // 0x33
+  1,  // 0x34
+  1,  // 0x35
+  1,  // 0x36
+  1,  // 0x37
+  1,  // 0x38
+  1,  // 0x39
+  1,  // 0x3A
+  1,  // 0x3B
+  1,  // 0x3C
+  1,  // 0x3D
+  1,  // 0x3E
+  1,  // 0x3F
+
+  2,  // 0x40
+  2,  // 0x41
+  1,  // 0x42
+  2,  // 0x43
+  1,  // 0x44
+  1,  // 0x45
+  1,  // 0x46
+  1,  // 0x47
+  1,  // 0x48
+  1,  // 0x49
+  1,  // 0x4A
+  1,  // 0x4B
+  1,  // 0x4C
+  1,  // 0x4D
+  1,  // 0x4E
+  1,  // 0x4F
+
+  2,  // 0x50
+  2,  // 0x51
+  1,  // 0x52
+  2,  // 0x53
+  1,  // 0x54
+  1,  // 0x55
+  1,  // 0x56
+  1,  // 0x57
+  1,  // 0x58
+  1,  // 0x59
+  1,  // 0x5A
+  1,  // 0x5B
+  1,  // 0x5C
+  1,  // 0x5D
+  1,  // 0x5E
+  1,  // 0x5F
+
+  2,  // 0x60
+  2,  // 0x61
+  1,  // 0x62
+  2,  // 0x63
+  1,  // 0x64
+  1,  // 0x65
+  1,  // 0x66
+  1,  // 0x67
+  1,  // 0x68
+  1,  // 0x69
+  1,  // 0x6A
+  1,  // 0x6B
+  1,  // 0x6C
+  1,  // 0x6D
+  1,  // 0x6E
+  1,  // 0x6F
+
+  2,  // 0x70
+  2,  // 0x71
+  2,  // 0x72
+  2,  // 0x73
+  1,  // 0x74
+  2,  // 0x75
+  1,  // 0x76
+  1,  // 0x77
+  1,  // 0x78
+  1,  // 0x79
+  1,  // 0x7A
+  1,  // 0x7B
+  1,  // 0x7C
+  1,  // 0x7D
+  1,  // 0x7E
+  1,  // 0x7F
+
+  2,  // 0x80
+  2,  // 0x81
+  2,  // 0x82
+  2,  // 0x83
+  4,  // 0x84
+  2,  // 0x85
+  2,  // 0x86
+  2,  // 0x87
+  2,  // 0x88
+  2,  // 0x89
+  2,  // 0x8A
+  2,  // 0x8B
+  2,  // 0x8C
+  2,  // 0x8D
+  2,  // 0x8E
+  2,  // 0x8F
+
+  2,  // 0x90
+  2,  // 0x91
+  2,  // 0x92
+  2,  // 0x93
+  1,  // 0x94
+  1,  // 0x95
+  1,  // 0x96
+  1,  // 0x97
+  1,  // 0x98
+  1,  // 0x99
+  1,  // 0x9A
+  1,  // 0x9B
+  1,  // 0x9C
+  1,  // 0x9D
+  1,  // 0x9E
+  1,  // 0x9F
+
+  2,  // 0xA0
+  2,  // 0xA1
+  1,  // 0xA2
+  2,  // 0xA3
+  4,  // 0xA4
+  0,  // 0xA5
+  2,  // 0xA6
+  2,  // 0xA7
+  2,  // 0xA8
+  2,  // 0xA9
+  2,  // 0xAA
+  2,  // 0xAB
+  2,  // 0xAC
+  2,  // 0xAD
+  2,  // 0xAE
+  2,  // 0xAF
+
+  2,  // 0xB0
+  2,  // 0xB1
+  1,  // 0xB2
+  1,  // 0xB3
+  2,  // 0xB4
+  2,  // 0xB5
+  2,  // 0xB6
+  2,  // 0xB7
+  2,  // 0xB8
+  2,  // 0xB9
+  2,  // 0xBA
+  2,  // 0xBB
+  2,  // 0xBC
+  2,  // 0xBD
+  2,  // 0xBE
+  2,  // 0xBF
+
+  1,  // 0xC0
+  2,  // 0xC1
+  1,  // 0xC2
+  1,  // 0xC3
+  1,  // 0xC4
+  1,  // 0xC5
+  1,  // 0xC6
+  1,  // 0xC7
+  1,  // 0xC8
+  1,  // 0xC9
+  1,  // 0xCA
+  1,  // 0xCB
+  1,  // 0xCC
+  1,  // 0xCD
+  1,  // 0xCE
+  1,  // 0xCF
+
+  2,  // 0xD0
+  2,  // 0xD1
+  1,  // 0xD2
+  1,  // 0xD3
+  1,  // 0xD4
+  2,  // 0xD5
+  1,  // 0xD6
+  1,  // 0xD7
+  2,  // 0xD8
+  2,  // 0xD9
+  2,  // 0xDA
+  2,  // 0xDB
+  2,  // 0xDC
+  2,  // 0xDD
+  2,  // 0xDE
+  2,  // 0xDF
+
+  2,  // 0xE0
+  2,  // 0xE1
+  2,  // 0xE2
+  2,  // 0xE3
+  1,  // 0xE4
+  1,  // 0xE5
+  1,  // 0xE6
+  1,  // 0xE7
+  1,  // 0xE8
+  1,  // 0xE9
+  1,  // 0xEA
+  1,  // 0xEB
+  1,  // 0xEC
+  1,  // 0xED
+  1,  // 0xEE
+  1,  // 0xEF
+
+  2,  // 0xF0
+  2,  // 0xF1
+  2,  // 0xF2
+  2,  // 0xF3
+  1,  // 0xF4
+  1,  // 0xF5
+  1,  // 0xF6
+  1,  // 0xF7
+  1,  // 0xF8
+  1,  // 0xF9
+  1,  // 0xFA
+  1,  // 0xFB
+  1,  // 0xFC
+  1,  // 0xFD
+  1,  // 0xFE
+  1   // 0xFF
+};
+
+
+#endif
