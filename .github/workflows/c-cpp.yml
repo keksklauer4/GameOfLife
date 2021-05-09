@@ -16,7 +16,7 @@ jobs:
     - name: configure
       run: ./configure
     - name: navigate to correct path
-      run: make
+      run: cd emulator
     - name: make
       run: make
     - name: make check
