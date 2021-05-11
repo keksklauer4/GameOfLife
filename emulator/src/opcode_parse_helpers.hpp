@@ -5,6 +5,7 @@
 
 #define A_REG m_state.regs.A
 #define B_REG m_state.regs.B
+#define PORT2() (*m_state.regs.P2)
 #define DPTR_REG m_state.regs.DPTR
 #define PC_REG m_state.regs.PC
 #define PC_MEM_LOC (m_state.program_memory + PC_REG)
@@ -24,6 +25,16 @@
 #define GET_REG_IND(i) (m_state.internal_data + *GET_REG(i))
 #define GET_REG_IND_EXT(i) (m_state.external_memory + *GET_REG(i))
 #define DPTR_EXTERNAL() (m_state.external_memory + *DPTR_REG)
+
+// macro to emulate external memory access
+// when accessing external memory, PORT2 is used to page the memory iff DPTR is used.
+// The upper byte of PORT2 is then set to the high byte of DPTR.
+// TODO: check whether it makes sense to emulate that.
+#define DPTR_PORT2(content)     \
+  uint8_t temp_port2 = PORT2(); \
+  PORT2() = (*DPTR_REG) >> 8;   \
+  content                       \
+  PORT2() = temp_port2;
 
 constexpr uint16_t AJMP_BITS(uint16_t v)
 {

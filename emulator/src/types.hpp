@@ -112,6 +112,7 @@ namespace emu
       *regs.SBUF = 0x00; // should be indeterminate but who cares
       *regs.PCON = 0x00;
       cycles_passed = 0;
+      last_opcode = 0;
     }
 
 

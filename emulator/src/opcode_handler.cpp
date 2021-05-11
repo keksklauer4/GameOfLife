@@ -1,5 +1,6 @@
 #include "opcode_handler.hpp"
 #include "opcode_macros.hpp"
+#include "intrinsics.hpp"
 
 #define HANDLE_PARITY_BIT() if ((POPCOUNT(*A_REG) & 0x01) != 0){ *m_state.regs.PSW |= 0x01; } else { *m_state.regs.PSW &= 0xFE; }
 

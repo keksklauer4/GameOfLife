@@ -2,6 +2,7 @@
 #define EMU_OPCODE_MACROS_HPP
 
 #include "opcode_parse_helpers.hpp"
+#include "intrinsics.hpp"
 
 
 
