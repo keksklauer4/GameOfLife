@@ -12,6 +12,7 @@ obj_files_dir = $(ODIR)/emulator.o $(ODIR)/opcode_handler_macro.o $(ODIR)/test.o
 
 all: createfolders emulator.o opcode_handler_macro.o test.o opcode_handler.o
 	g++ $(CPPFLAGS) $(LDFLAGS) -o $(BINDIR)/test_emu.out  $(obj_files_dir) $(LDLIBS)
+	ar rvs gui/libemulator.a $(obj_files_dir)
 
 createfolders:
 	mkdir obj -p
