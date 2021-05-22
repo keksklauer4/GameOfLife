@@ -8,6 +8,7 @@ LEDWidget::LEDWidget(unsigned int cols, unsigned int rows, QWidget* parent)
   : QWidget(parent), rows_(rows), cols_(cols)
 {
   showCell(1, 1, Qt::black);
+  QObject::connect(this, &LEDWidget::repaintRequired, this, &LEDWidget::executeRepaint);
 }
 
 unsigned int LEDWidget::getColumnCount() const
@@ -18,6 +19,16 @@ unsigned int LEDWidget::getColumnCount() const
 unsigned int LEDWidget::getRowCount() const
 {
   return rows_;
+}
+
+void LEDWidget::beginCellModification()
+{
+  mutex_.lock();
+}
+
+void LEDWidget::endCellModification()
+{
+  mutex_.unlock();
 }
 
 void LEDWidget::clear()
@@ -35,8 +46,18 @@ void LEDWidget::hideCell(unsigned int col, unsigned int row, QColor)
   visibleCells_.erase(std::make_pair(col, row));
 }
 
+void LEDWidget::executeRepaint()
+{
+  repaint();
+}
+
 void LEDWidget::paintEvent(QPaintEvent*)
 {
+  mutex_.lock();
+  visibleCellsCurrent_ = visibleCells_;
+  clear();
+  mutex_.unlock();
+
   cellWidth_ = width() / cols_;
   cellHeight_ = height() / rows_;
 
@@ -83,7 +104,7 @@ void LEDWidget::drawGrid(QPainter &painter)
 
 void LEDWidget::drawCells(QPainter &painter)
 {
-  for(auto it = visibleCells_.begin(); it != visibleCells_.end(); ++it)
+  for(auto it = visibleCellsCurrent_.begin(); it != visibleCellsCurrent_.end(); ++it)
   {
     float x = cellWidth_ * it->first.first;
     float y = cellHeight_ * it->first.second;

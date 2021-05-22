@@ -24,6 +24,8 @@ class LEDHandler
       emu::fuint32_t row = 0;
       emu::fuint32_t col;
       bool needsRepaint = false;
+
+      m_leds.beginCellModification();
       while (rowSelect != 0)
       {
         col = 0;
@@ -46,7 +48,9 @@ class LEDHandler
         }
         row++;
       }
-      if (needsRepaint) m_leds.repaint();
+      m_leds.endCellModification();
+      
+      if (needsRepaint) emit m_leds.repaintRequired();
     }
 
   private:
