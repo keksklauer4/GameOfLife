@@ -12,16 +12,17 @@ Currently implemented features are:
 - ```External Interrupt 0``` and ```External Interrupt 1``` can be triggered.
 - Configuration options: ```Debug```, ```Timer 0```, ```Timer 1``` (decide whether Timers 0 and 1 should be emulated), ```Exception``` (how to handle unexpected states?)
 - Custom callback can be specified in the form of a ```std::function<void(state_t&)>```. The callback receives a reference on the state_t struct of the emulator. ```state_t``` contains all registers, memory locations and a ```cycles_passed``` variable that indicates how many instruction cycles have been passed.
+- ```External reset``` can be triggered.
+- ```PORT2``` being used for ```paging external memory``` when using external 16 bit addresses is emulated.
+- For specifc functionality (namely ```popcount``` and ```bswap16```) both compiler intrinsics or manually implemented functionality can be used.
 
 ## To be implemented
 - Visualizations
-- ```Reset``` functionality
 - ```Interrupt priorization```
 - Maybe ```serial communication```
-- Port usage (when using MOVX @DPTR, ```Port 2``` is used to page external memory)
-- Alternativ functions for ```GCC``` builtins
 - Examples
 
 ## Notes
 - Timer register contents will be updated after each instruction executed.
+- It is important to know that when addressing external memory with a 16 bit address, more specifically, when using ```MOVX``` with ```@DPTR```, PORT2 is used for paging the memory. Therefore, when addressing that way, one cannot rely on PORT2's values. After addressing, the value is restored.
 - Don't be mad at me for extensively making use of C macros... They enabled me to stay as efficient as possible while minizing function calls. I did not want to implement a dynarec but still wanted the Interpreter to be as fast as possible. Therefore, I had to rely on the compiler optimizing as much as possible.

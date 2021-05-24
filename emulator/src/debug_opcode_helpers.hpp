@@ -6,6 +6,7 @@
 
 #include "config.hpp"
 #include "opcode_parse_helpers.hpp"
+#include "types.hpp"
 
 #if __DEBUG__ == 1
 #define DEBUG(content) content
@@ -66,11 +67,24 @@
 #define DBG_2B_ADDR() DEBUG(OS_OBJ << HEX() << CAST(BSWAP16(DBG_2B_IMM())) << std::endl;)
 
 
-#define PRINT_REG_DEBUG() DEBUG(std::cout << "Printing Register Debug: " \
-  << "A: " << CAST(*A_REG) << "\t B: " << CAST(*B_REG) \
-  << "\t R0:" << CAST(*GET_REG(0)) << "\t R1:" << CAST(*GET_REG(1)) << std::endl; \
-  std::cout << "PSW: 0b" << std::bitset<8>{*m_state.regs.PSW} << std::endl;      \
-  std::cout << "PC: 0x" << (PC_REG - 1) << std::endl;)
+#define PRINT_REG_DEBUG() DEBUG(                                                             \
+  OS_OBJ << "Printing Register Debug: "                                                      \
+    << "A: " << CAST(*A_REG) << "\t B: " << CAST(*B_REG) << std::endl;                       \
+  for (fuint32_t registerBank = 0; registerBank < 4; registerBank++)                         \
+  {                                                                                          \
+    OS_OBJ << "Bank " << registerBank << ": \t";                                             \
+    for(fuint32_t reg = 0; reg < 8; ++reg) {                                                 \
+      std::cout << "R" << reg << ": "                                                        \
+        << std::hex << CAST(*(m_state.internal_data + reg + (registerBank << 3))) << "\t";   \
+    }                                                                                        \
+    OS_OBJ << std::endl;                                                                     \
+  }                                                                                          \
+  for (fuint32_t port = 0; port < 4; ++port)                                                 \
+  {                                                                                          \
+    OS_OBJ << "Port " << port << ": " << CAST(*(m_state.regs.P0 + (port << 4))) << "\t";     \
+  }                                                                                          \
+  OS_OBJ << std::endl << "PSW: 0b" << std::bitset<8>{*m_state.regs.PSW} << std::endl;        \
+  OS_OBJ << "PC: 0x" << (PC_REG - 1) << std::endl;)
 
 
 static std::map<uint8_t, std::string> bit_addressable_map{

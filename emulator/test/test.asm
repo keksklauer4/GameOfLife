@@ -1,8 +1,8 @@
 cseg at 0h
-ajmp l_init
+ajmp l_test
 cseg at 30h
 mov A, #88
-JMP l_loopo
+JMP l_test
 
 cseg at 100h
 l_init:
@@ -12,7 +12,7 @@ MOV TL1, #0
 MOV TH0, #200
 MOV TH1, #0
 MOV TCON, #0x10
-MOV IE, #0x8F
+MOV IE, #0x00
 ORL PCON, #0x01
 
 MOV A, #1
@@ -79,20 +79,40 @@ INC R1
 MOVX @R1, A
 CJNE R0, #10, l_fibo_iter
 
-
 MOVX A, @R1
 XCH A, B
 MOVX A, @R0
 
-l_loop:
-NOP
-NOP
-SJMP l_loop
+l_test:
+MOV P3, #0
+CLR A
+MOV r2, #0
 
+l_loop:
 l_loopo:
+NOP
+NOP
+CLR P0.7
+MOV P1, A
+MOV P3, r2
+SETB P0.7
+INC r2
+CALL f_delay
 INC A
 SJMP l_loopo
 
 
+
+f_delay:
+MOV r0, #0
+l_outer:
+MOV r1, #0
+l_inner:
+NOP
+NOP
+DJNZ r1, l_inner
+DJNZ r0, l_outer
+
+RET
 
 END

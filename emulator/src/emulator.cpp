@@ -88,6 +88,10 @@ void Emulator::init()
   m_state.reset();
 }
 
+void Emulator::hardwareReset(){
+  init();
+}
+
 
 
 void Emulator::handleInterrupts()

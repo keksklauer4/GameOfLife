@@ -12,6 +12,8 @@ cpp/jp_table_gen
 *.mcu8051ide~
 *.inc~
 *.vhc~
+.vscode/*
+emulator/gui/build/*
 
 # Prerequisites
 *.d

@@ -538,7 +538,7 @@ l_clear_screen_loop:
 f_draw_screen:
 	MOV PSW, #00011000b
 	MOV A, r7 ; we have to save the current line of the cursor
-	PUSH A
+	PUSH ACC
 	MOV r0, #0
 	MOV r2, #01111111b
 
@@ -555,7 +555,7 @@ l_draw_screen_loop:
 	SJMP l_draw_screen_loop
 
 l_done_drawing:
-	POP A
+	POP ACC
 	MOV r7, A
 	RET
 

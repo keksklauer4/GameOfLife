@@ -8,7 +8,7 @@
 #define __ENABLE_TIMER_1__ 1
 #define __ENABLE_INTERRUPTS__ 1
 #define __THROW_EXCEPTION_ON_ERRONEOUS_STATE__ 1
-
+#define __GCC_X86__ 1 // flag to determine whether compiled with gcc on x86 (because of intrinsics)
 
 
 
@@ -38,8 +38,5 @@
 #define THROW_EXCEPTION(content)
 #endif
 
-// compiler/architecture specifics
-#define POPCOUNT(val) __builtin_popcount(val)
-#define BSWAP16(v) __builtin_bswap16(v)
 
 #endif
