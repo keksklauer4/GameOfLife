@@ -43,10 +43,10 @@ constexpr uint16_t AJMP_BITS(uint16_t v)
 
 
 #define RD_ADDRESS() uint8_t addr = READ_BYTE_PC();
-#define GET_DATA_ADDRESS() (addr & 0x80 == 0 ? m_state.internal_data + addr : m_state.sfr_memory + (addr & 0x7F))
+#define GET_DATA_ADDRESS() ((addr & 0x80) == 0 ? (m_state.internal_data + addr) : (m_state.sfr_memory + (addr & 0x7F)))
 
 // There is one MOV data_address, data_address instruction which is why this dirty copy pasta is needed.
 #define RD_ADDRESSES() RD_ADDRESS() uint8_t addr2 = READ_BYTE_PC();
-#define GET_DATA_ADDRESS_SEC() (addr2 & 0x80 == 0 ? m_state.internal_data + addr2 : m_state.sfr_memory + (addr2 & 0x7F))
+#define GET_DATA_ADDRESS_SEC() ((addr2 & 0x80) == 0 ? (m_state.internal_data + addr2) : (m_state.sfr_memory + (addr2 & 0x7F)))
 
 #endif

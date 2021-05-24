@@ -301,8 +301,8 @@ namespace emu
       void MOVC_A_PC_83() { MOVC_IND_16((uint16_t*)PC_MEM_LOC); }
       void MOVC_A_DPTR_93() { MOVC_IND_16(DPTR_REG); }
 
-      void MOV_at_R0_data_addr_A6() { DBG_P_DA() RD_ADDRESSES() MOV(GET_REG_IND(0), *GET_DATA_ADDRESS()); }
-      void MOV_at_R1_data_addr_A7() { DBG_P_DA() RD_ADDRESSES() MOV(GET_REG_IND(1), *GET_DATA_ADDRESS()); }
+      void MOV_at_R0_data_addr_A6() { DBG_P_DA() RD_ADDRESS() MOV(GET_REG_IND(0), *GET_DATA_ADDRESS()); }
+      void MOV_at_R1_data_addr_A7() { DBG_P_DA() RD_ADDRESS() MOV(GET_REG_IND(1), *GET_DATA_ADDRESS()); }
       void MOV_R0_data_addr_A8() { DBG_P_DA() RD_ADDRESS() MOV(GET_REG(0), *GET_DATA_ADDRESS()); }
       void MOV_R1_data_addr_A9() { DBG_P_DA() RD_ADDRESS() MOV(GET_REG(1), *GET_DATA_ADDRESS()); }
       void MOV_R2_data_addr_AA() { DBG_P_DA() RD_ADDRESS() MOV(GET_REG(2), *GET_DATA_ADDRESS()); }

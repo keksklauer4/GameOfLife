@@ -87,7 +87,7 @@
   OS_OBJ << "PC: 0x" << (PC_REG - 1) << std::endl;)
 
 
-static std::map<uint8_t, std::string> bit_addressable_map{
+static const std::map<uint8_t, std::string> bit_addressable_map{
   { 0x80, "P0" },
   { 0x88, "TCON" },
   { 0x90, "P1" },
@@ -376,7 +376,7 @@ static std::string mnemonics[] = {
   "MOV R7, A"    // 0xFF
 };
 
-static uint8_t cycles[] = {
+static const uint8_t cycles[] = {
   1,  // 0x00
   2,  // 0x01
   2,  // 0x02
