@@ -117,10 +117,7 @@ void MainWindow::startEmulator()
       {
         led_handler.forceRepaint();
         cycles_passed = 0;
-        high_resolution_clock::time_point preSleep = high_resolution_clock::now();
         std::this_thread::sleep_until(timer + PERIOD_LENGTH);
-        high_resolution_clock::time_point up = high_resolution_clock::now();
-        // std::cout << "Slept milliseconds: " << duration_cast<std::chrono::milliseconds>(up - timer).count() << "-" << duration_cast<std::chrono::milliseconds>(up - preSleep).count() << std::endl;
         timer = high_resolution_clock::now();
       }
     }

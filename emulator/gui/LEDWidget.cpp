@@ -8,7 +8,7 @@
 using emu::fuint32_t;
 
 LEDWidget::LEDWidget(QWidget* parent)
-  : QWidget(parent), visibleCells_(0), visibleCellsCurrent_(0)
+  : QWidget(parent), visibleCellsCurrent_(0), visibleCells_(0)
 {
   QObject::connect(this, &LEDWidget::repaintRequired, this, &LEDWidget::executeRepaint);
 }
