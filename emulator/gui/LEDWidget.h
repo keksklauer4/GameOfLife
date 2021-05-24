@@ -3,8 +3,13 @@
 
 #include <QWidget>
 #include <QHash>
+#include <cstdint>
+#include <iostream>
+#include <cinttypes>
 
 #include <mutex>
+
+#include "../src/emulator.hpp"
 
 class QPaintEvent;
 class QPainter;
@@ -15,18 +20,15 @@ class LEDWidget : public QWidget
 
 public:
 
-  explicit LEDWidget(unsigned int cols, unsigned int rows, QWidget* parent = nullptr);
+  explicit LEDWidget(QWidget* parent = nullptr);
 
-  unsigned int getColumnCount() const;
-  unsigned int getRowCount() const;
   void beginCellModification();
   void endCellModification();
 
 public slots:
 
-  void clear();
-  void showCell(unsigned int col, unsigned int row, QColor color);
-  void hideCell(unsigned int col, unsigned int row, QColor color);
+  uint64_t getScreen() { return visibleCells_; }
+  void setScreen(uint64_t newVisibleCells);
   void executeRepaint();
 
 signals:
@@ -44,10 +46,8 @@ private:
   void drawCells(QPainter &painter);
 
 private:
-
-  std::map<std::pair<unsigned int, unsigned int>, QColor> visibleCellsCurrent_;
-  std::map<std::pair<unsigned int, unsigned int>, QColor> visibleCells_;
-  unsigned int rows_, cols_;
+  uint64_t visibleCellsCurrent_;
+  uint64_t visibleCells_;
   float cellWidth_, cellHeight_;
   std::mutex mutex_;
 };

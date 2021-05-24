@@ -3,22 +3,14 @@
 #include <QPaintEvent>
 #include <QPainter>
 #include <QPainterPath>
+#include <cstdint>
 
-LEDWidget::LEDWidget(unsigned int cols, unsigned int rows, QWidget* parent)
-  : QWidget(parent), rows_(rows), cols_(cols)
+using emu::fuint32_t;
+
+LEDWidget::LEDWidget(QWidget* parent)
+  : QWidget(parent), visibleCells_(0), visibleCellsCurrent_(0)
 {
-  showCell(1, 1, Qt::black);
   QObject::connect(this, &LEDWidget::repaintRequired, this, &LEDWidget::executeRepaint);
-}
-
-unsigned int LEDWidget::getColumnCount() const
-{
-  return cols_;
-}
-
-unsigned int LEDWidget::getRowCount() const
-{
-  return rows_;
 }
 
 void LEDWidget::beginCellModification()
@@ -31,21 +23,10 @@ void LEDWidget::endCellModification()
   mutex_.unlock();
 }
 
-void LEDWidget::clear()
+void LEDWidget::setScreen(uint64_t newVisibleCells)
 {
-  visibleCells_.clear();
+  visibleCells_ = newVisibleCells;
 }
-
-void LEDWidget::showCell(unsigned int col, unsigned int row, QColor color)
-{
-  visibleCells_.insert(std::make_pair(std::make_pair(col, row), color));
-}
-
-void LEDWidget::hideCell(unsigned int col, unsigned int row, QColor)
-{
-  visibleCells_.erase(std::make_pair(col, row));
-}
-
 void LEDWidget::executeRepaint()
 {
   repaint();
@@ -55,14 +36,13 @@ void LEDWidget::paintEvent(QPaintEvent*)
 {
   mutex_.lock();
   visibleCellsCurrent_ = visibleCells_;
-  clear();
   mutex_.unlock();
 
-  cellWidth_ = width() / cols_;
-  cellHeight_ = height() / rows_;
+  cellWidth_ = width() / 8;
+  cellHeight_ = height() / 8;
 
   QPainter painter(this);
-  drawGrid(painter);
+  //drawGrid(painter);
   drawCells(painter);
 }
 
@@ -104,11 +84,16 @@ void LEDWidget::drawGrid(QPainter &painter)
 
 void LEDWidget::drawCells(QPainter &painter)
 {
-  for(auto it = visibleCellsCurrent_.begin(); it != visibleCellsCurrent_.end(); ++it)
+  uint64_t cells = visibleCellsCurrent_;
+  for (fuint32_t row = 0; row < 8; ++row)
   {
-    float x = cellWidth_ * it->first.first;
-    float y = cellHeight_ * it->first.second;
+    for (fuint32_t col = 0; col < 8; ++col)
+    {
+      float x = cellWidth_ * col;
+      float y = cellHeight_ * row;
 
-    painter.fillRect(QRectF(x, y, cellWidth_, cellHeight_), it->second);
+      painter.fillRect(QRectF(x, y, cellWidth_, cellHeight_), (cells & 0x01 ? Qt::red : Qt::black));
+      cells >>= 1;
+    }
   }
 }

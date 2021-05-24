@@ -7,6 +7,8 @@
 #include <thread>
 #include <functional>
 #include <chrono>
+#include <QKeyEvent>
+#include <unordered_map>
 
 #include "../src/emulator.hpp"
 #include "led_handler.h"
@@ -28,8 +30,12 @@ public:
   void startEmulator();
 
 public slots:
-  void onActionButtonClicked(uint8_t mask);
+  void onActionButtonPressed(uint8_t mask);
+  void onActionButtonReleased(uint8_t mask);
 
+protected:
+  void keyPressEvent(QKeyEvent *event);
+  void keyReleaseEvent(QKeyEvent *event);
 
 private:
   LEDWidget* ledWidget_;

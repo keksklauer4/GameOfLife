@@ -83,9 +83,12 @@
   const uint8_t byte = READ_BYTE_PC();    \
   CLR_BIT_ADDRESSABLE_RAW(byte)
 
+#define SET_BIT_ADDRESSABLE_RAW(val)                              \
+  (*FETCH_BIT_ADRESSABLE(val)) |= (BIT_ADDRESSABLE_BITMASK(val))
+
 #define SET_BIT_ADDRESSABLE()             \
   const uint8_t byte = READ_BYTE_PC();    \
-  CLR_BIT_ADDRESSABLE_RAW(byte)
+  SET_BIT_ADDRESSABLE_RAW(byte)
 
 #define CONDITIONAL_BIT_ADRESSABLE_MOV(cond)  \
   if(cond) { SET_BIT_ADDRESSABLE();  } else { CLR_BIT_ADDRESSABLE(); }

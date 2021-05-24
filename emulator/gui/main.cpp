@@ -11,6 +11,8 @@ int main(int argc, char *argv[])
   MainWindow w;
   w.setFilename(filename);
   w.show();
-
-  return a.exec();
+  w.startEmulator();
+  a.exec();
+  std::cout << "Exiting emulator." << std::endl;
+  return 0;
 }
