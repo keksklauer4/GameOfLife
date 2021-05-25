@@ -5,3 +5,5 @@ mkdir build
 cd build
 qmake ..
 make
+
+cp LEDMatrix ../../LEDMatrix
