@@ -10,18 +10,22 @@ l_start:
 cseg at 100h
 l_init:
 	MOV IE, #0
-	MOV A, #0
+	CLR A
 	CALL f_load_dptr
 	MOV A, #01010101b
 	MOVX @DPTR, A
-	CALL f_init_matrices
+	;CALL f_init_matrices
 	CALL f_init_registers
+	MOV P1, #0xFF
+	MOV P3, #0
+	SETB P0.7
+	CLR P0.7
 l_loop:
 	CALL f_iteration
 	JMP l_loop
 
 f_iteration:
-	CALL f_clear_screen
+	;CALL f_clear_screen
 	CALL f_draw_screen
 	CALL f_key_handler ; handle key presses
 	MOV A, r5
@@ -60,21 +64,21 @@ f_key_handler:
 	MOV A, P0
 	CPL A
 	JZ l_quit_press_handler ; allow quitting much faster if nothing is pressed
-	JB P0.7, l_check_whether_left
+	JB P0.5, l_check_whether_left
 	; up pressed
 	MOV A, r7
 	JZ l_check_whether_left
 	DEC r7
 
 l_check_whether_left:
-	JB P0.6, l_check_whether_down
+	JB P0.4, l_check_whether_down
 	; left pressed
 	MOV A, r6
 	JZ l_check_whether_down
 	DEC r6
 
 l_check_whether_down:
-	JB P0.5, l_check_whether_right
+	JB P0.3, l_check_whether_right
 	; down is pressed, INC r7 if allowed
 	MOV A, r7
 	ANL A, #0x1F ; mask out upper bits
@@ -83,7 +87,7 @@ l_check_whether_down:
 	INC r7
 
 l_check_whether_right:
-	JB P0.4, l_check_whether_toggle_pressed
+	JB P0.2, l_check_whether_toggle_pressed
 	; right is pressed, INC r6 if allowed
 	MOV A, r6
 	ANL A, #0x1F ; mask out upper bits
@@ -92,14 +96,14 @@ l_check_whether_right:
 	INC r6
 
 l_check_whether_toggle_pressed:
-	JB P0.3, l_check_whether_start
+	JB P0.1, l_check_whether_start
 	MOV A, r5
 	JB A.0, l_check_whether_start ; if start is set, then disable toggle...
 	CALL f_toggle_pixel
 	; toggle pressed, toggle corresponding
 
 l_check_whether_start:
-	JB P0.2, l_quit_press_handler
+	JB P0.0, l_quit_press_handler
 	; start pressed
 	MOV A, r5
 	CPL A.0
@@ -544,10 +548,16 @@ f_draw_screen:
 
 l_draw_screen_loop:
 	CALL f_prepare_line
+	CPL A
 	MOV B, A
 	MOV A, r2
+	CPL A
+	CLR P0.7
 	MOV P1, A
-	MOV P2, B
+	MOV P3, B
+	SETB P0.7
+	CLR P0.7
+	CPL A
 	JNB A.0, l_done_drawing
 	RR A
 	MOV r2, A
@@ -556,6 +566,7 @@ l_draw_screen_loop:
 
 l_done_drawing:
 	POP ACC
+	CLR P0.7
 	MOV r7, A
 	RET
 

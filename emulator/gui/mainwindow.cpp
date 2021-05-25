@@ -4,6 +4,7 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QPushButton>
+#include <cstdint>
 
 using namespace emu;
 using namespace std::chrono;
@@ -102,7 +103,10 @@ void MainWindow::startEmulator()
       *(state.regs.P0) |= *buttomMaskPtr;
       if (*(state.regs.P0) & 0x80)
       { // draw
+        //std::cout << "Drawing " << std::hex << static_cast<uint32_t>(*(state.regs.P1)) << "-" << static_cast<uint32_t>(*(state.regs.P3)) << std::endl;
         led_handler.setLines(*(state.regs.P1), *(state.regs.P3));
+
+        if (__DEBUG__) {led_handler.forceRepaint();}
       }
     });
 

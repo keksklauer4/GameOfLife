@@ -17,10 +17,10 @@
 #define READ_BYTE_PC() m_state.program_memory[INC_PC()]
 #define IMMEDIATE() READ_BYTE_PC()
 #define READ_2BYTE_PC() (((uint16_t)READ_BYTE_PC())<<8) | READ_BYTE_PC()
-#define SP_LOCATION() m_state.program_memory[GET_SP()]
+#define SP_LOCATION() m_state.internal_data[GET_SP()]
 
 #define PARSE_REG_BANK() ((*m_state.regs.PSW) & 0b00011000)
-#define GET_REG(i) (m_state.program_memory + PARSE_REG_BANK() + i)
+#define GET_REG(i) (m_state.internal_data + PARSE_REG_BANK() + i)
 
 #define GET_REG_IND(i) (m_state.internal_data + *GET_REG(i))
 #define GET_REG_IND_EXT(i) (m_state.external_memory + *GET_REG(i))

@@ -116,7 +116,7 @@ void OpcodeHandler::DA()
 
 void OpcodeHandler::DEC(uint8_t* address)
 {
-  (*address)++;
+  (*address)--;
 }
 
 void OpcodeHandler::DIV()
@@ -137,7 +137,6 @@ void OpcodeHandler::DIV()
 
 void OpcodeHandler::DJNZ(uint8_t* address)
 {
-  DBG_P_REL()
   (*address)--;
   CONDITIONAL_REL_JUMP((*address) != 0)
 }
@@ -237,6 +236,7 @@ void OpcodeHandler::MOV_from_C()
 
 void OpcodeHandler::MOV_DPTR()
 {
+  DBG_P_IMM_2B()
   *m_state.regs.DPTR = READ_2BYTE_PC_BIG_ENDIAN();
 }
 
@@ -273,14 +273,14 @@ void OpcodeHandler::ORL_C(bool cpl)
 
 void OpcodeHandler::POP()
 {
-  DBG_P_DA()
+  DBG_SINGLE_DATA_ADDR()
   uint8_t* addr = READ_ADDRESS_1B();
   *addr = POP_FROM_STACK();
 }
 
 void OpcodeHandler::PUSH()
 {
-  DBG_P_DA()
+  DBG_SINGLE_DATA_ADDR()
   WRITE_STACK(*READ_ADDRESS_1B());
 }
 

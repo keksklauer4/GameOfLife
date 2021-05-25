@@ -9,9 +9,9 @@
 #include "types.hpp"
 
 #if __DEBUG__ == 1
-#define DEBUG(content) content
+#define DEBUG(...) __VA_ARGS__
 #else
-#define DEBUG(content)
+#define DEBUG(...)
 #endif
 
 #define OS_OBJ std::cout
@@ -51,21 +51,27 @@
   OS_OBJ << HEX() << CAST(READ_BYTE_OFFSET(offset));
 
 #define DBG_CODE_ADDR(offset)                   \
-  OS_OBJ << HEX() << CAST(READ_BYTE_OFFSET(offset));
+  OS_OBJ << HEX() << CAST(PC_REG + offset + 1 + READ_SIGNED_OFFSET(offset));
 
 #define DBG_CODE_ADDR_ABS(bitmask)                   \
-  OS_OBJ << HEX() << CAST(bitmask | READ_BYTE_OFFSET(0));
+  DEBUG(OS_OBJ << HEX() << CAST(bitmask | READ_BYTE_OFFSET(0));)
 
 #define DBG_P_REL() DEBUG(DBG_REL_CODE(0))
-#define DBG_P_BA() DEBUG(DBG_BIT_ADDRESSABLE(0))
-#define DBG_P_BA_REL() DEBUG(DBG_BIT_ADDRESSABLE(0) DBG_COMMA() DBG_REL_CODE(1))
-#define DBG_P_IMM() DEBUG(DBG_IMMEDIATE(0))
-#define DBG_P_IMM_REL() DEBUG(DBG_IMMEDIATE(0) DBG_COMMA() DBG_REL_CODE(1))
-#define DBG_P_DA() DEBUG(DBG_DATA_ADDR(0))
+#define DBG_P_BA() DEBUG(DBG_BIT_ADDRESSABLE(0) OS_OBJ << std::endl;)
+#define DBG_P_BA_REL() DEBUG(DBG_BIT_ADDRESSABLE(0) DBG_COMMA() DBG_REL_CODE(1) OS_OBJ << std::endl;)
+#define DBG_P_IMM() DEBUG(DBG_IMMEDIATE(0) OS_OBJ << std::endl;)
+#define DBG_P_IMM_REL() DEBUG(DBG_IMMEDIATE(0) DBG_COMMA() DBG_REL_CODE(1) OS_OBJ << std::endl;)
 #define DBG_AJMP() DEBUG(OS_OBJ << HEX() << CAST((AJMP_BITS(m_opcode >> 5)) | ((uint16_t)READ_BYTE_OFFSET(0)) | ((PC_REG + 1) & 0xF800)) << std::endl;)
 #define DBG_ACALL() DBG_AJMP()
 #define DBG_2B_ADDR() DEBUG(OS_OBJ << HEX() << CAST(BSWAP16(DBG_2B_IMM())) << std::endl;)
-
+#define DBG_P_IMM_2B() DEBUG(OS_OBJ << HEX() << ((((uint16_t)READ_BYTE_OFFSET(0)) << 8) | READ_BYTE_OFFSET(1)) << std::endl;)
+#define DBG_SINGLE_DATA_ADDR() DEBUG(OS_OBJ << data_address_dbg[READ_BYTE_OFFSET(0)] << std::endl;)
+#define DBG_DATA_ADDR_OP(operand) DEBUG(OS_OBJ << data_address_dbg[READ_BYTE_OFFSET(0)]; DBG_COMMA() OS_OBJ << #operand << std::endl;)
+#define DBG_DATA_ADDR_IMM() DEBUG(OS_OBJ << data_address_dbg[READ_BYTE_OFFSET(0)]; DBG_COMMA() DBG_IMMEDIATE(1) OS_OBJ << std::endl;)
+#define DBG_8_BIT_REG_BIN(NAME, ptr) DEBUG(OS_OBJ << #NAME << ": \t0b" << std::bitset<8>{*(ptr)} << std::endl;)
+#define DBG_2_DATA_ADDR() DEBUG(OS_OBJ << data_address_dbg[READ_BYTE_OFFSET(1)]; DBG_COMMA() OS_OBJ << data_address_dbg[READ_BYTE_OFFSET(0)] << std::endl;)
+#define DBG_P_CODE_ADDR() DEBUG(DBG_CODE_ADDR(0) OS_OBJ << std::endl;)
+#define DBG_P_DATA_ADDR_CODE_ADDR() DEBUG(OS_OBJ << data_address_dbg[READ_BYTE_OFFSET(0)]; DBG_COMMA() DBG_CODE_ADDR(1) OS_OBJ << std::endl;)
 
 #define PRINT_REG_DEBUG() DEBUG(                                                             \
   OS_OBJ << "Printing Register Debug: "                                                      \
@@ -81,9 +87,19 @@
   }                                                                                          \
   for (fuint32_t port = 0; port < 4; ++port)                                                 \
   {                                                                                          \
-    OS_OBJ << "Port " << port << ": " << CAST(*(m_state.regs.P0 + (port << 4))) << "\t";     \
+    OS_OBJ << "Port " << port << ": 0x" << CAST(*(m_state.regs.P0 + (port << 4))) << "\t";     \
   }                                                                                          \
-  OS_OBJ << std::endl << "PSW: 0b" << std::bitset<8>{*m_state.regs.PSW} << std::endl;        \
+  OS_OBJ << std::endl;                                                                       \
+  OS_OBJ << "SP: \t" << CAST(*m_state.regs.SP) << std::endl;                                     \
+  DBG_8_BIT_REG_BIN(PSW, m_state.regs.PSW)                                                   \
+  DBG_8_BIT_REG_BIN(IP, m_state.regs.IP)                                                     \
+  DBG_8_BIT_REG_BIN(IE, m_state.regs.IE)                                                     \
+  DBG_8_BIT_REG_BIN(TCON, m_state.regs.TCON)                                                 \
+  DBG_8_BIT_REG_BIN(TMOD, m_state.regs.TMOD)                                                 \
+  DBG_8_BIT_REG_BIN(PCON, m_state.regs.PCON)                                                 \
+  DBG_8_BIT_REG_BIN(SCON, m_state.regs.SCON)                                                 \
+  DBG_8_BIT_REG_BIN(SBUF, m_state.regs.SBUF)                                                 \
+  OS_OBJ << "DPTR: 0x" << std::hex << CAST(*m_state.regs.DPTR) << std::endl;                 \
   OS_OBJ << "PC: 0x" << (PC_REG - 1) << std::endl;)
 
 
@@ -103,73 +119,73 @@ static const std::map<uint8_t, std::string> bit_addressable_map{
 };
 
 static std::string mnemonics[] = {
-  "NOP",        // 0x00
+  "NOP\n",        // 0x00
   "AJMP ",      // 0x01
   "LJMP ",      // 0x02
-  "RR A",       // 0x03
-  "INC A",      // 0x04
+  "RR A\n",       // 0x03
+  "INC A\n",      // 0x04
   "INC ",       // 0x05
-  "INC @R0",   // 0x06
-  "INC @R1",   // 0x07
-  "INC R0",    // 0x08
-  "INC R1",    // 0x09
-  "INC R2",    // 0x0A
-  "INC R3",    // 0x0B
-  "INC R4",    // 0x0C
-  "INC R5",    // 0x0D
-  "INC R6",    // 0x0E
-  "INC R7",    // 0x0F
+  "INC @R0\n",   // 0x06
+  "INC @R1\n",   // 0x07
+  "INC R0\n",    // 0x08
+  "INC R1\n",    // 0x09
+  "INC R2\n",    // 0x0A
+  "INC R3\n",    // 0x0B
+  "INC R4\n",    // 0x0C
+  "INC R5\n",    // 0x0D
+  "INC R6\n",    // 0x0E
+  "INC R7\n",    // 0x0F
 
   "JBC ",       // 0x10
   "ACALL ",     // 0x11
   "LCALL ",     // 0x12
-  "RRC A",     // 0x13
-  "DEC A",     // 0x14
+  "RRC A\n",     // 0x13
+  "DEC A\n",     // 0x14
   "DEC ",       // 0x15
-  "DEC @R0",   // 0x16
-  "DEC @R1",   // 0x17
-  "DEC R0",    // 0x18
-  "DEC R1",    // 0x19
-  "DEC R2",    // 0x1A
-  "DEC R3",    // 0x1B
-  "DEC R4",    // 0x1C
-  "DEC R5",    // 0x1D
-  "DEC R6",    // 0x1E
-  "DEC R7",    // 0x1F
+  "DEC @R0\n",   // 0x16
+  "DEC @R1\n",   // 0x17
+  "DEC R0\n",    // 0x18
+  "DEC R1\n",    // 0x19
+  "DEC R2\n",    // 0x1A
+  "DEC R3\n",    // 0x1B
+  "DEC R4\n",    // 0x1C
+  "DEC R5\n",    // 0x1D
+  "DEC R6\n",    // 0x1E
+  "DEC R7\n",    // 0x1F
 
   "JB ",       // 0x20
   "AJMP ",     // 0x21
-  "RET",     // 0x22
-  "RL A",     // 0x23
+  "RET\n",     // 0x22
+  "RL A\n",     // 0x23
   "ADD A, ",     // 0x24
   "ADD A, ",       // 0x25
-  "ADD A, @R0",   // 0x26
-  "ADD A, @R1",   // 0x27
-  "ADD A, R0",    // 0x28
-  "ADD A, R1",    // 0x29
-  "ADD A, R2",    // 0x2A
-  "ADD A, R3",    // 0x2B
-  "ADD A, R4",    // 0x2C
-  "ADD A, R5",    // 0x2D
-  "ADD A, R6",    // 0x2E
-  "ADD A, R7",    // 0x2F
+  "ADD A, @R0\n",   // 0x26
+  "ADD A, @R1\n",   // 0x27
+  "ADD A, R0\n",    // 0x28
+  "ADD A, R1\n",    // 0x29
+  "ADD A, R2\n",    // 0x2A
+  "ADD A, R3\n",    // 0x2B
+  "ADD A, R4\n",    // 0x2C
+  "ADD A, R5\n",    // 0x2D
+  "ADD A, R6\n",    // 0x2E
+  "ADD A, R7\n",    // 0x2F
 
   "JNB ",       // 0x30
   "ACALL ",     // 0x31
-  "RETI",     // 0x32
-  "RLC A",     // 0x33
+  "RETI\n",     // 0x32
+  "RLC A\n",     // 0x33
   "ADDC A, ",     // 0x34
   "ADDC A, ",       // 0x35
-  "ADDC A, @R0",   // 0x36
-  "ADDC A, @R1",   // 0x37
-  "ADDC A, R0",    // 0x38
-  "ADDC A, R1",    // 0x39
-  "ADDC A, R2",    // 0x3A
-  "ADDC A, R3",    // 0x3B
-  "ADDC A, R4",    // 0x3C
-  "ADDC A, R5",    // 0x3D
-  "ADDC A, R6",    // 0x3E
-  "ADDC A, R7",    // 0x3F
+  "ADDC A, @R0\n",   // 0x36
+  "ADDC A, @R1\n",   // 0x37
+  "ADDC A, R0\n",    // 0x38
+  "ADDC A, R1\n",    // 0x39
+  "ADDC A, R2\n",    // 0x3A
+  "ADDC A, R3\n",    // 0x3B
+  "ADDC A, R4\n",    // 0x3C
+  "ADDC A, R5\n",    // 0x3D
+  "ADDC A, R6\n",    // 0x3E
+  "ADDC A, R7\n",    // 0x3F
 
   "JC ",       // 0x40
   "AJMP ",     // 0x41
@@ -177,16 +193,16 @@ static std::string mnemonics[] = {
   "ORL ",     // 0x43
   "ORL A, ",     // 0x44
   "ORL A, ",       // 0x45
-  "ORL A, @R0",   // 0x46
-  "ORL A, @R1",   // 0x47
-  "ORL A, R0",    // 0x48
-  "ORL A, R1",    // 0x49
-  "ORL A, R2",    // 0x4A
-  "ORL A, R3",    // 0x4B
-  "ORL A, R4",    // 0x4C
-  "ORL A, R5",    // 0x4D
-  "ORL A, R6",    // 0x4E
-  "ORL A, R7",    // 0x4F
+  "ORL A, @R0\n",   // 0x46
+  "ORL A, @R1\n",   // 0x47
+  "ORL A, R0\n",    // 0x48
+  "ORL A, R1\n",    // 0x49
+  "ORL A, R2\n",    // 0x4A
+  "ORL A, R3\n",    // 0x4B
+  "ORL A, R4\n",    // 0x4C
+  "ORL A, R5\n",    // 0x4D
+  "ORL A, R6\n",    // 0x4E
+  "ORL A, R7\n",    // 0x4F
 
   "JNC ",       // 0x50
   "ACALL ",     // 0x51
@@ -194,16 +210,16 @@ static std::string mnemonics[] = {
   "ANL ",     // 0x53
   "ANL A, ",     // 0x54
   "ANL A, ",       // 0x55
-  "ANL A, @R0",   // 0x56
-  "ANL A, @R1",   // 0x57
-  "ANL A, R0",    // 0x58
-  "ANL A, R1",    // 0x59
-  "ANL A, R2",    // 0x5A
-  "ANL A, R3",    // 0x5B
-  "ANL A, R4",    // 0x5C
-  "ANL A, R5",    // 0x5D
-  "ANL A, R6",    // 0x5E
-  "ANL A, R7",    // 0x5F
+  "ANL A, @R0\n",   // 0x56
+  "ANL A, @R1\n",   // 0x57
+  "ANL A, R0\n",    // 0x58
+  "ANL A, R1\n",    // 0x59
+  "ANL A, R2\n",    // 0x5A
+  "ANL A, R3\n",    // 0x5B
+  "ANL A, R4\n",    // 0x5C
+  "ANL A, R5\n",    // 0x5D
+  "ANL A, R6\n",    // 0x5E
+  "ANL A, R7\n",    // 0x5F
 
   "JZ ",       // 0x60
   "AJMP ",     // 0x61
@@ -211,21 +227,21 @@ static std::string mnemonics[] = {
   "XRL ",     // 0x63
   "XRL A, ",     // 0x64
   "XRL A, ",       // 0x65
-  "XRL A, @R0",   // 0x66
-  "XRL A, @R1",   // 0x67
-  "XRL A, R0",    // 0x68
-  "XRL A, R1",    // 0x69
-  "XRL A, R2",    // 0x6A
-  "XRL A, R3",    // 0x6B
-  "XRL A, R4",    // 0x6C
-  "XRL A, R5",    // 0x6D
-  "XRL A, R6",    // 0x6E
-  "XRL A, R7",    // 0x6F
+  "XRL A, @R0\n",   // 0x66
+  "XRL A, @R1\n",   // 0x67
+  "XRL A, R0\n",    // 0x68
+  "XRL A, R1\n",    // 0x69
+  "XRL A, R2\n",    // 0x6A
+  "XRL A, R3\n",    // 0x6B
+  "XRL A, R4\n",    // 0x6C
+  "XRL A, R5\n",    // 0x6D
+  "XRL A, R6\n",    // 0x6E
+  "XRL A, R7\n",    // 0x6F
 
   "JNZ ",       // 0x70
   "ACALL ",     // 0x71
   "ORL C, ",     // 0x72
-  "JMP @A+DPTR",     // 0x73
+  "JMP @A+DPTR\n",     // 0x73
   "MOV A, ",     // 0x74
   "MOV ",       // 0x75
   "MOV @R0, ",   // 0x76
@@ -242,7 +258,7 @@ static std::string mnemonics[] = {
   "SJMP ",       // 0x80
   "AJMP ",     // 0x81
   "ANL C, ",     // 0x82
-  "MOVC A, @A+PC",     // 0x83
+  "MOVC A, @A+PC\n",     // 0x83
   "DIV AB",     // 0x84
   "MOV ",       // 0x85
   "MOV ",   // 0x86
@@ -259,26 +275,26 @@ static std::string mnemonics[] = {
   "MOV DPTR, ",       // 0x90
   "ACALL ",     // 0x91
   "MOV ",     // 0x92
-  "MOVC A, @A+DPTR",     // 0x93
+  "MOVC A, @A+DPTR\n",     // 0x93
   "SUBB A, ",     // 0x94
   "SUBB A, ",       // 0x95
-  "SUBB A, @R0",   // 0x96
-  "SUBB A, @R1",   // 0x97
-  "SUBB A, R0",    // 0x98
-  "SUBB A, R1",    // 0x99
-  "SUBB A, R2",    // 0x9A
-  "SUBB A, R3",    // 0x9B
-  "SUBB A, R4",    // 0x9C
-  "SUBB A, R5",    // 0x9D
-  "SUBB A, R6",    // 0x9E
-  "SUBB A, R7",    // 0x9F
+  "SUBB A, @R0\n",   // 0x96
+  "SUBB A, @R1\n",   // 0x97
+  "SUBB A, R0\n",    // 0x98
+  "SUBB A, R1\n",    // 0x99
+  "SUBB A, R2\n",    // 0x9A
+  "SUBB A, R3\n",    // 0x9B
+  "SUBB A, R4\n",    // 0x9C
+  "SUBB A, R5\n",    // 0x9D
+  "SUBB A, R6\n",    // 0x9E
+  "SUBB A, R7\n",    // 0x9F
 
   "ORL C, /",       // 0xA0
   "AJMP ",       // 0xA1
   "MOV C, ",     // 0xA2
-  "INC DPTR",    // 0xA3
-  "MUL AB",      // 0xA4
-  "<reserved>",  // 0xA5
+  "INC DPTR\n",    // 0xA3
+  "MUL AB\n",      // 0xA4
+  "<reserved>\n",  // 0xA5
   "MOV @R0, ",   // 0xA6
   "MOV @R1, ",   // 0xA7
   "MOV R0, ",    // 0xA8
@@ -293,7 +309,7 @@ static std::string mnemonics[] = {
   "ANL C, /",     // 0xB0
   "ACALL ",       // 0xB1
   "CPL ",         // 0xB2
-  "CPL C",        // 0xB3
+  "CPL C\n",        // 0xB3
   "CJNE A, ",     // 0xB4
   "CJNE A, ",     // 0xB5
   "CJNE @R0, ",   // 0xB6
@@ -310,25 +326,25 @@ static std::string mnemonics[] = {
   "PUSH ",        // 0xC0
   "AJMP ",        // 0xC1
   "CLR ",         // 0xC2
-  "CLR C",        // 0xC3
-  "SWAP A",       // 0xC4
+  "CLR C\n",        // 0xC3
+  "SWAP A\n",       // 0xC4
   "XCH A, ",      // 0xC5
-  "XCH A, @R0",   // 0xC6
-  "XCH A, @R1",   // 0xC7
-  "XCH A, R0",    // 0xC8
-  "XCH A, R1",    // 0xC9
-  "XCH A, R2",    // 0xCA
-  "XCH A, R3",    // 0xCB
-  "XCH A, R4",    // 0xCC
-  "XCH A, R5",    // 0xCD
-  "XCH A, R6",    // 0xCE
-  "XCH A, R7",    // 0xCF
+  "XCH A, @R0\n",   // 0xC6
+  "XCH A, @R1\n",   // 0xC7
+  "XCH A, R0\n",    // 0xC8
+  "XCH A, R1\n",    // 0xC9
+  "XCH A, R2\n",    // 0xCA
+  "XCH A, R3\n",    // 0xCB
+  "XCH A, R4\n",    // 0xCC
+  "XCH A, R5\n",    // 0xCD
+  "XCH A, R6\n",    // 0xCE
+  "XCH A, R7\n",    // 0xCF
 
   "POP ",         // 0xD0
   "ACALL ",       // 0xD1
   "SETB ",        // 0xD2
-  "SETB C",       // 0xD3
-  "DA A",         // 0xD4
+  "SETB C\n",       // 0xD3
+  "DA A\n",         // 0xD4
   "DJNZ ",        // 0xD5
   "XCHD A, @R0, ",// 0xD6
   "XCHD A, @R1, ",// 0xD7
@@ -341,39 +357,39 @@ static std::string mnemonics[] = {
   "DJNZ R6, ",    // 0xDE
   "DJNZ R7, ",    // 0xDF
 
-  "MOVX A, @DPTR",       // 0xE0
+  "MOVX A, @DPTR\n",       // 0xE0
   "AJMP ",     // 0xE1
-  "MOVX A, @R0",     // 0xE2
-  "MOVX A, @R1",     // 0xE3
-  "CLR A",     // 0xE4
+  "MOVX A, @R0\n",     // 0xE2
+  "MOVX A, @R1\n",     // 0xE3
+  "CLR A\n",     // 0xE4
   "MOV A, ",       // 0xE5
-  "MOV A, @R0",   // 0xE6
-  "MOV A, @R1",   // 0xE7
-  "MOV A, R0",    // 0xE8
-  "MOV A, R1",    // 0xE9
-  "MOV A, R2",    // 0xEA
-  "MOV A, R3",    // 0xEB
-  "MOV A, R4",    // 0xEC
-  "MOV A, R5",    // 0xED
-  "MOV A, R6",    // 0xEE
-  "MOV A, R7",    // 0xEF
+  "MOV A, @R0\n",   // 0xE6
+  "MOV A, @R1\n",   // 0xE7
+  "MOV A, R0\n",    // 0xE8
+  "MOV A, R1\n",    // 0xE9
+  "MOV A, R2\n",    // 0xEA
+  "MOV A, R3\n",    // 0xEB
+  "MOV A, R4\n",    // 0xEC
+  "MOV A, R5\n",    // 0xED
+  "MOV A, R6\n",    // 0xEE
+  "MOV A, R7\n",    // 0xEF
 
-  "MOVX @DPTR, A",       // 0xF0
+  "MOVX @DPTR, A\n",       // 0xF0
   "ACALL ",     // 0xF1
-  "MOVX @R0, A",     // 0xF2
-  "MOVX @R1, A",     // 0xF3
-  "CPL A",     // 0xF4
+  "MOVX @R0, A\n",     // 0xF2
+  "MOVX @R1, A\n",     // 0xF3
+  "CPL A\n",     // 0xF4
   "MOV ",       // 0xF5
-  "MOV @R0, A",   // 0xF6
-  "MOV @R1, A",   // 0xF7
-  "MOV R0, A",    // 0xF8
-  "MOV R1, A",    // 0xF9
-  "MOV R2, A",    // 0xFA
-  "MOV R3, A",    // 0xFB
-  "MOV R4, A",    // 0xFC
-  "MOV R5, A",    // 0xFD
-  "MOV R6, A",    // 0xFE
-  "MOV R7, A"    // 0xFF
+  "MOV @R0, A\n",   // 0xF6
+  "MOV @R1, A\n",   // 0xF7
+  "MOV R0, A\n",    // 0xF8
+  "MOV R1, A\n",    // 0xF9
+  "MOV R2, A\n",    // 0xFA
+  "MOV R3, A\n",    // 0xFB
+  "MOV R4, A\n",    // 0xFC
+  "MOV R5, A\n",    // 0xFD
+  "MOV R6, A\n",    // 0xFE
+  "MOV R7, A\n"    // 0xFF
 };
 
 static const uint8_t cycles[] = {
@@ -650,5 +666,39 @@ static const uint8_t cycles[] = {
   1   // 0xFF
 };
 
+DEBUG(static const char* data_address_dbg[]{
+  "0x00", "0x01", "0x02", "0x03", "0x04", "0x05", "0x06", "0x07",
+  "0x08", "0x09", "0x0a", "0x0b", "0x0c", "0x0d", "0x0e", "0x0f",
+  "0x10", "0x11", "0x12", "0x13", "0x14", "0x15", "0x16", "0x17",
+  "0x18", "0x19", "0x1a", "0x1b", "0x1c", "0x1d", "0x1e", "0x1f",
+  "0x20", "0x21", "0x22", "0x23", "0x24", "0x25", "0x26", "0x27",
+  "0x28", "0x29", "0x2a", "0x2b", "0x2c", "0x2d", "0x2e", "0x2f",
+  "0x30", "0x31", "0x32", "0x33", "0x34", "0x35", "0x36", "0x37",
+  "0x38", "0x39", "0x3a", "0x3b", "0x3c", "0x3d", "0x3e", "0x3f",
+  "0x40", "0x41", "0x42", "0x43", "0x44", "0x45", "0x46", "0x47",
+  "0x48", "0x49", "0x4a", "0x4b", "0x4c", "0x4d", "0x4e", "0x4f",
+  "0x50", "0x51", "0x52", "0x53", "0x54", "0x55", "0x56", "0x57",
+  "0x58", "0x59", "0x5a", "0x5b", "0x5c", "0x5d", "0x5e", "0x5f",
+  "0x60", "0x61", "0x62", "0x63", "0x64", "0x65", "0x66", "0x67",
+  "0x68", "0x69", "0x6a", "0x6b", "0x6c", "0x6d", "0x6e", "0x6f",
+  "0x70", "0x71", "0x72", "0x73", "0x74", "0x75", "0x76", "0x77",
+  "0x78", "0x79", "0x7a", "0x7b", "0x7c", "0x7d", "0x7e", "0x7f",
+  "P0",   "SP",   "DPL",  "DPH",  "0x84", "0x85", "0x86", "PCON",
+  "TCON", "TMOD", "TL0",  "TL1",  "TH0",  "TH1",  "0x8e", "0x8f",
+  "P1",   "0x91", "0x92", "0x93", "0x94", "0x95", "0x96", "0x97",
+  "SCON", "SBUF", "0x9a", "0x9b", "0x9c", "0x9d", "0x9e", "0x9f",
+  "P2",   "0xa1", "0xa2", "0xa3", "0xa4", "0xa5", "0xa6", "0xa7",
+  "IE",   "0xa9", "0xaa", "0xab", "0xac", "0xad", "0xae", "0xaf",
+  "P3",   "0xb1", "0xb2", "0xb3", "0xb4", "0xb5", "0xb6", "0xb7",
+  "IP",   "0xb9", "0xba", "0xbb", "0xbc", "0xbd", "0xbe", "0xbf",
+  "0xc0", "0xc1", "0xc2", "0xc3", "0xc4", "0xc5", "0xc6", "0xc7",
+  "0xc8", "0xc9", "0xca", "0xcb", "0xcc", "0xcd", "0xce", "0xcf",
+  "PSW",  "0xd1", "0xd2", "0xd3", "0xd4", "0xd5", "0xd6", "0xd7",
+  "0xd8", "0xd9", "0xda", "0xdb", "0xdc", "0xdd", "0xde", "0xdf",
+  "ACC",  "0xe1", "0xe2", "0xe3", "0xe4", "0xe5", "0xe6", "0xe7",
+  "0xe8", "0xe9", "0xea", "0xeb", "0xec", "0xed", "0xee", "0xef",
+  "B",    "0xf1", "0xf2", "0xf3", "0xf4", "0xf5", "0xf6", "0xf7",
+  "0xf8", "0xf9", "0xfa", "0xfb", "0xfc", "0xfd", "0xfe", "0xff"
+};)
 
 #endif

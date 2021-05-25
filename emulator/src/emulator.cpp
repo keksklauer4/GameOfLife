@@ -57,13 +57,15 @@ void Emulator::setup(const std::string& filename)
 void Emulator::step()
 {
   fuint32_t power_config = (*m_state.regs.PCON) & 0x03;
-  if ((power_config & 0x02) != 0) return; // power down bit set
+  if ((power_config & 0x02) != 0) {DEBUG(OS_OBJ << "Power down bit is set." << std::endl;) return;} // power down bit set
+  DEBUG(if((power_config & 0x01) != 0) {OS_OBJ << "Controller is in idle mode and will wake up on interrupt." << std::endl;})
   if (power_config == 0){ m_opHandler->execOpcode(); } // otherwise in idle mode (can be stopped through interrupts)
   DBG_TIMERS()
   TIMER0(if (CHECK_TIMER0_ON()){ (*this.*(m_jpTable[GET_TIMER0_MODE()]))(m_state.regs.TL0, 0x20); })
   TIMER1(if (CHECK_TIMER1_ON()){ (*this.*(m_jpTable[GET_TIMER1_MODE()]))(m_state.regs.TL1, 0x80); })
   m_stepCallback(m_state);
   handleInterrupts();
+  DEBUG(char c = getchar();)
 }
 
 
@@ -96,7 +98,7 @@ void Emulator::hardwareReset(){
 
 void Emulator::handleInterrupts()
 {
-  if (IE() & 0x80 == 0 || IE() & 0x1F == 0) return; // either interrupt master disabled or no interrupt enabled
+  if ((IE() & 0x80) == 0 || (IE() & 0x1F) == 0) return; // either interrupt master disabled or no interrupt enabled
   uint8_t ints = TCON() & 0xAA;
   if (ints == 0) return;
 

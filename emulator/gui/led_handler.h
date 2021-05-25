@@ -19,22 +19,21 @@ class LEDHandler
 
       uint64_t screen = m_leds.getScreen();
       emu::fuint32_t rowSelect = rowSelectMask;
-      uint64_t selectMask = 0;
-      uint64_t changeMask = 0;
+      uint64_t selectMask = 0xFF;
+      uint64_t changeMask = colSetting;
+
       while(rowSelect != 0)
       {
-        changeMask <<= 8;
-        selectMask <<= 8;
         if (rowSelect & 0x01)
         {
-          changeMask |= colSetting;
-          selectMask |= 0xff;
+          screen &= (~selectMask);
+          screen |= changeMask;
         }
+        selectMask <<= 8;
+        changeMask <<= 8;
         rowSelect >>= 1;
       }
-
-      screen &= (~selectMask);
-      screen |= changeMask;
+      //std::cout << "Screen " << screen  << " Mask " << static_cast<uint32_t>(rowSelectMask) << " Col " << static_cast<uint32_t>(colSetting) << std::endl;
 
       m_leds.beginCellModification();
       m_leds.setScreen(screen);

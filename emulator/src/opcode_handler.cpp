@@ -19,7 +19,6 @@ void OpcodeHandler::execOpcode()
   m_state.last_opcode = cycles[m_opcode];
   m_state.cycles_passed += m_state.last_opcode;
   DEBUG(std::cout << std::endl;)
-  DEBUG(char c = getchar();)
 }
 
 void OpcodeHandler::jumpInterrupt(uint16_t address)

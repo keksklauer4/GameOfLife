@@ -1,4 +1,5 @@
 cseg at 0h
+CLR P0.7
 ajmp l_test
 cseg at 30h
 mov A, #88
@@ -84,9 +85,72 @@ XCH A, B
 MOVX A, @R0
 
 l_test:
+; useless test for the emulator's debugger (testing correct output)
+MOV r2, #1
+DJNZ r2, l_test
+MOV P1, #1
+DJNZ P1, l_test
+INC r2
+
+MOV DPTR, #0x1234
+INC B
+INC PSW
+DEC B
+ADD A, P0
+ADDC A, P0
+ORL B, A
+ORL B, #0x0F
+ORL A, B
+
+ANL B, A
+ANL B, #0x0F
+ANL A, B
+
+MOV B, #0x34
+MOV A, #45
+XRL B, A
+XRL B, #0x0F
+XRL A, B
+
+MOV P0, #0x7F
+MOV r5, #0x69
+MOV P1, P2
+MOV R2, #0x18
+MOV PSW, R2
+MOV P2, @R0
+
+SUBB A, PCON
+MOV R4, SBUF
+MOV @R1, SCON
+PUSH B
+POP B
+XCH A, P0
+MOV B, #100
+DJNZ B, l_loop
+MOV A, TH0
+MOV TL0, A
+
+
 MOV P3, #0
 CLR A
 MOV r2, #0
+MOV P1, #0x02
+MOV P3, #0xf0
+SETB P0.7
+CLR P0.7
+MOV P1,  #1
+MOV p3, #1
+SETB P0.7
+CLR P0.7
+MOV P1,  #0x80
+MOV p3, #0x80
+SETB P0.7
+CLR P0.7
+MOV P1,  #0x18
+MOV p3, #0x18
+SETB P0.7
+CLR P0.7
+
 
 l_loop:
 l_loopo:
