@@ -3,7 +3,7 @@
 
 
 // configure these macros.
-#define __DEBUG__ 0
+#define __DEBUG__ 1
 #define __ENABLE_TIMER_0__ 1
 #define __ENABLE_TIMER_1__ 1
 #define __ENABLE_INTERRUPTS__ 1

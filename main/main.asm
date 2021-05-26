@@ -7,17 +7,16 @@ CSEG at 0h
 l_start:
 	AJMP l_init
 
+cseg at 0Bh
+l_timer_zero_handler:
+	RETI
+
+
 cseg at 100h
 l_init:
 	MOV SP, #0x50
 	MOV IE, #0
 	CALL f_init_matrices
-	MOV A, #4
-	MOV DPTR, #0x87
-	MOV A, #0x07
-	MOVX @DPTR, A
-	
-
 	CALL f_init_registers
 	MOV P1, #0xFF
 	MOV P3, #0
@@ -25,7 +24,6 @@ l_init:
 	CLR P0.7
 	MOV P0, #0
 	ORL PSW, #00011000b
-	MOV r5, #1
 
 l_loop:
 	CALL f_iteration
@@ -46,7 +44,24 @@ l_not_in_simulation_mode:
 	RET
 
 f_massive_sleep:
-	mov r0, #10
+	mov r0, #15
+
+l_sleep_loop:
+	; configure timer 0
+	; save power by using idle mode
+	CLR TCON.4
+	MOV TMOD, #0x01
+	MOV TL0, #0
+	MOV TH0, #0
+	MOV IE, #0x82
+	SETB TCON.4
+	ORL PCON, #0x01
+	NOP
+	NOP
+	DJNZ r0, l_sleep_loop
+	RET
+
+; not used
 l_outer_outer:
 	mov r1, #0
 l_outer:
@@ -85,6 +100,15 @@ f_key_handler:
 	;CPL A
 	ANL A, #0x7F
 	JZ l_quit_press_handler ; allow quitting much faster if nothing is pressed
+	MOV B, A
+	MOV A, r5
+	JB ACC.0, l_check_whether_up ; do not even try to check ACC.6 if on
+	MOV A, B
+	JNB ACC.6, l_check_whether_up
+	ACALL f_multiplexed_selection ; returns here through jump table, then jump there again
+	AJMP l_copy_shape_continue
+
+l_check_whether_up:
 	JNB P0.0, l_check_whether_left
 	; up pressed
 	MOV A, r7
@@ -198,6 +222,57 @@ f_copy_from_DPTR_to_regs:
 	MOVX A, @DPTR
 	MOV r7, A
 	RET
+
+; returns to key_handler's caller
+f_multiplexed_selection:
+	MOV A, r5
+	JNB ACC.0, l_loop_await_decision
+	RET
+l_loop_await_decision:
+	NOP
+	NOP
+	MOV A, P0
+	JB ACC.6, l_loop_await_decision
+
+	ANL A, #0x3F
+	MOV DPTR, #l_selection_jump_table
+	RL A
+	RL A
+	JMP @A+DPTR
+l_copy_shape_continue:
+	MOV PSW, #0
+	CLR A
+	MOVC A, @A+DPTR
+	INC DPTR
+	MOV r1, A
+
+	; copy loop
+l_copy_loop:
+	CLR A
+	MOVC A, @A+DPTR
+	ANL A, #0x1F
+	RL A
+	RL A
+	SETB ACC.7
+	MOV B, A
+	INC DPTR
+	CLR A
+	MOVC A, @A+DPTR
+	ANL A, #0x18
+	RR A
+	RR A
+	RR A
+	ADD A, B
+	MOV r0, A
+	INC DPTR
+	CLR A
+	MOVC A, @A+DPTR
+	MOVX @R0, A ; write byte
+
+	DJNZ r1, l_copy_loop
+
+	RET
+
 
 
 ; 128 bytes will be copied from 128 offset to matrix contents
