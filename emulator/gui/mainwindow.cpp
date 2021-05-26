@@ -37,14 +37,45 @@ MainWindow::MainWindow(QWidget *parent)
   buttonLayout_ = new QHBoxLayout;
   for(int i = 0; i < 7; ++i)
   {
+    auto verticalLayout = new QVBoxLayout;
+
+    checkboxes_[2*i] = new QCheckBox(QString("Latch btn %1").arg(i));
+    checkboxes_[2*i + 1] = new QCheckBox(QString("Btn %1 state").arg(i));
+    checkboxes_[2*i + 1]->setEnabled(false);
     buttons_[i] = new QPushButton(QString("%1").arg(i));
-    buttonLayout_->addWidget(buttons_[i]);
+    verticalLayout->addWidget(checkboxes_[2*i]);
+    verticalLayout->addWidget(checkboxes_[2*i+1]);
+    verticalLayout->addWidget(buttons_[i]);
+    buttonLayout_->addLayout(verticalLayout);
     uint8_t mask = 0x01 << i;
     QObject::connect(buttons_[i], &QPushButton::pressed, this, [mask, this]() {
       onActionButtonPressed(mask);
     });
     QObject::connect(buttons_[i], &QPushButton::released, this, [mask, this]() {
       onActionButtonReleased(mask);
+    });
+    QObject::connect(checkboxes_[2*i], &QCheckBox::clicked, this, [this, i](bool newState) {
+      if (newState)
+      {
+        this->holdState_ |= (0x01 << i);
+        this->checkboxes_[2*i + 1]->setEnabled(true);
+        this->buttons_[i]->setEnabled(false);
+      }
+      else
+      {
+        this->holdState_ &= (~(0x01 << i));
+        this->checkboxes_[2*i + 1]->setEnabled(false);
+        this->buttons_[i]->setEnabled(true);
+      }
+    });
+    QObject::connect(checkboxes_[2*i + 1], &QCheckBox::clicked, this, [this, i](bool newState) {
+      if (newState)
+      {
+        this->buttonMask_ |= (0x01 << i);
+      }
+      else {
+        this->buttonMask_ &= (~(0x01 << i));
+      }
     });
   }
 
@@ -63,7 +94,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
   auto buttonMapped = keyMapping.find((Qt::Key)event->key());
   if (buttonMapped != keyMapping.end())
   {
-    buttonMask_ |= buttonMapped->second;
+    buttonMask_ |= ((~holdState_) & buttonMapped->second);
   }
 }
 
@@ -73,7 +104,7 @@ void MainWindow::keyReleaseEvent(QKeyEvent *event)
   auto buttonMapped = keyMapping.find((Qt::Key)event->key());
   if (buttonMapped != keyMapping.end())
   {
-    buttonMask_ &= ~(buttonMapped->second);
+    buttonMask_ &= ~((~holdState_) & buttonMapped->second);
   }
 }
 

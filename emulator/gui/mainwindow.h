@@ -8,6 +8,7 @@
 #include <functional>
 #include <chrono>
 #include <QKeyEvent>
+#include <QCheckBox>
 #include <unordered_map>
 
 #include "../src/emulator.hpp"
@@ -18,6 +19,7 @@ class LEDWidget;
 class QPushButton;
 class QVBoxLayout;
 class QHBoxLayout;
+class QCheckBox;
 
 class MainWindow : public QMainWindow
 {
@@ -39,10 +41,12 @@ protected:
 
 private:
   LEDWidget* ledWidget_;
-  QPushButton* buttons_[8];
+  QPushButton* buttons_[7];
+  QCheckBox* checkboxes_[14];
   QVBoxLayout* mainLayout_;
   QHBoxLayout* buttonLayout_;
   std::string filename_;
   uint8_t buttonMask_;
+  uint8_t holdState_ = 0;
 };
 #endif // MAINWINDOW_H

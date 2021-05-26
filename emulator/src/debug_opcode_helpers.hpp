@@ -56,7 +56,7 @@
 #define DBG_CODE_ADDR_ABS(bitmask)                   \
   DEBUG(OS_OBJ << HEX() << CAST(bitmask | READ_BYTE_OFFSET(0));)
 
-#define DBG_P_REL() DEBUG(DBG_REL_CODE(0))
+#define DBG_P_REL() DEBUG(DBG_REL_CODE(0) OS_OBJ << std::endl;)
 #define DBG_P_BA() DEBUG(DBG_BIT_ADDRESSABLE(0) OS_OBJ << std::endl;)
 #define DBG_P_BA_REL() DEBUG(DBG_BIT_ADDRESSABLE(0) DBG_COMMA() DBG_REL_CODE(1) OS_OBJ << std::endl;)
 #define DBG_P_IMM() DEBUG(DBG_IMMEDIATE(0) OS_OBJ << std::endl;)

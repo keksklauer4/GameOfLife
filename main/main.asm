@@ -9,17 +9,24 @@ l_start:
 
 cseg at 100h
 l_init:
+	MOV SP, #0x50
 	MOV IE, #0
-	CLR A
-	CALL f_load_dptr
-	MOV A, #01010101b
+	CALL f_init_matrices
+	MOV A, #4
+	MOV DPTR, #0x87
+	MOV A, #0x07
 	MOVX @DPTR, A
-	;CALL f_init_matrices
+	
+
 	CALL f_init_registers
 	MOV P1, #0xFF
 	MOV P3, #0
 	SETB P0.7
 	CLR P0.7
+	MOV P0, #0
+	ORL PSW, #00011000b
+	MOV r5, #1
+
 l_loop:
 	CALL f_iteration
 	JMP l_loop
@@ -27,6 +34,7 @@ l_loop:
 f_iteration:
 	;CALL f_clear_screen
 	CALL f_draw_screen
+	CALL f_massive_sleep
 	CALL f_key_handler ; handle key presses
 	MOV A, r5
 	JNB A.0, l_not_in_simulation_mode
@@ -37,6 +45,18 @@ l_not_in_simulation_mode:
 	; sleep
 	RET
 
+f_massive_sleep:
+	mov r0, #10
+l_outer_outer:
+	mov r1, #0
+l_outer:
+	mov r2, #0
+l_inner:
+	djnz r2, l_inner
+
+	djnz r1, l_outer
+	djnz r0, l_outer_outer
+	ret
 
 ; consumes A, r0, DPTR
 f_init_matrices:
@@ -62,23 +82,24 @@ f_init_registers:
 f_key_handler:
 	MOV PSW, #00011000b
 	MOV A, P0
-	CPL A
+	;CPL A
+	ANL A, #0x7F
 	JZ l_quit_press_handler ; allow quitting much faster if nothing is pressed
-	JB P0.5, l_check_whether_left
+	JNB P0.0, l_check_whether_left
 	; up pressed
 	MOV A, r7
 	JZ l_check_whether_left
 	DEC r7
 
 l_check_whether_left:
-	JB P0.4, l_check_whether_down
+	JNB P0.1, l_check_whether_down
 	; left pressed
 	MOV A, r6
 	JZ l_check_whether_down
 	DEC r6
 
 l_check_whether_down:
-	JB P0.3, l_check_whether_right
+	JNB P0.2, l_check_whether_right
 	; down is pressed, INC r7 if allowed
 	MOV A, r7
 	ANL A, #0x1F ; mask out upper bits
@@ -87,7 +108,7 @@ l_check_whether_down:
 	INC r7
 
 l_check_whether_right:
-	JB P0.2, l_check_whether_toggle_pressed
+	JNB P0.3, l_check_whether_toggle_pressed
 	; right is pressed, INC r6 if allowed
 	MOV A, r6
 	ANL A, #0x1F ; mask out upper bits
@@ -96,14 +117,14 @@ l_check_whether_right:
 	INC r6
 
 l_check_whether_toggle_pressed:
-	JB P0.1, l_check_whether_start
+	JNB P0.4, l_check_whether_start
 	MOV A, r5
 	JB A.0, l_check_whether_start ; if start is set, then disable toggle...
 	CALL f_toggle_pixel
 	; toggle pressed, toggle corresponding
 
 l_check_whether_start:
-	JB P0.0, l_quit_press_handler
+	JNB P0.5, l_quit_press_handler
 	; start pressed
 	MOV A, r5
 	CPL A.0
@@ -132,21 +153,17 @@ f_toggle_pixel:
 ; r0 contains bit position (from left)
 ; consumes A, r0
 ; r0 must be < 8
-f_create_pixel_mask: ; TODO(keksklauer4): consider using SWAP to elimate 4 loops or lookup table
-	MOV A, #7
-	CLR C
-	SUBB A, r0
-	MOV r0, A
+f_create_pixel_mask:
 	MOV A, #10000000b
+	CJNE r0, #0, l_prepare_pixel_mask
+	SJMP l_quit_pixel_mask
+l_prepare_pixel_mask:
 	CLR C
-
 l_pixel_mask_loop:
-	CJNE r0, #0, l_quit_pixel_mask
 	RR A ; no need to repeatedly clear flag since only one bit is set
-	DEC r0
-	SJMP l_pixel_mask_loop
-
+	DJNZ r0, l_pixel_mask_loop
 l_quit_pixel_mask:
+	MOV r0, A
 	RET
 
 f_copy_from_DPTR_to_regs:
@@ -188,58 +205,18 @@ f_memcpy_screen_to_matrix:
 	PUSH PSW
 	MOV PSW, #00010000b ; use register bank 2 for optimized copy
 
-	MOV B, #0x80
+	MOV R0, #0x80
+	MOV R1, #0x00
 
 l_memcpy_loop:
-	; get DPTR on first
-	MOV A, B
-	CALL f_load_dptr
-	; DPTR is on copy from location
-	; now copy 8 bytes into r0-r7 while always INC DPTR
-	; we bulk copy 8 bytes to heavily (!) optimize the loop
-	; performance increase is around (at least) 8 times
-	CALL f_copy_from_DPTR_to_regs
-
-	; now set DPTR to dest location
-	MOV A, B
-	CPL A.7 ; complement msb as it is equivalent to +128 (ignoring overflow)
-	CALL f_load_dptr
-	; now copy r0-r7 to @DPTR byte after byte
+	MOVX A, @R0
+	MOVX @R1, A
+	CLR A
+	MOVX @R0, A
+	INC R1
+	INC R0
 	MOV A, r0
-	MOVX @DPTR, A
-	INC DPTR
-
-	MOV A, r1
-	MOVX @DPTR, A
-	INC DPTR
-
-	MOV A, r2
-	MOVX @DPTR, A
-	INC DPTR
-
-	MOV A, r3
-	MOVX @DPTR, A
-	INC DPTR
-
-	MOV A, r4
-	MOVX @DPTR, A
-	INC DPTR
-
-	MOV A, r5
-	MOVX @DPTR, A
-	INC DPTR
-
-	MOV A, r6
-	MOVX @DPTR, A
-	INC DPTR
-
-	MOV A, r7
-	MOVX @DPTR, A
-
-	MOV A, B
-	ADD A, #8 ; add 8 to B because we just read 8 bytes
-	MOV B, A
-	JNZ l_memcpy_loop ; if A == 0 this means that we completed copying 128 bytes.
+	JNZ l_memcpy_loop
 
 	POP PSW
 	RET
@@ -259,7 +236,7 @@ f_calculate_next_generation: ; (huge function!)
 	MOV r3, #0
 
 	MOV PSW, #00010000b
-	MOV DPTR, #l_jp_table ; set DPTR for lower two rows
+	MOV DPTR, #0 ; set DPTR for lower two rows
 	CALL f_copy_from_DPTR_to_regs
 
 ; attention, nested loop follows!
@@ -272,8 +249,6 @@ l_row_generation_loop: ; (huge loop!)
 
 	; read upper row
 	MOV A, r7
-	CLR C
-	RLC A
 	ANL A, #00000011b
 	MOVC A, @A+DPTR
 	MOV B, A
@@ -281,8 +256,6 @@ l_row_generation_loop: ; (huge loop!)
 	; read middle row
 	MOV PSW, #00010000b
 	MOV A, r3
-	CLR C
-	RLC A
 	ANL A, #00000010b ; we do not want to count the middle (which is the rightmost in this case because we are at the rightmost side of the board)
 	MOVC A, @A+DPTR
 	ADD A, B
@@ -290,8 +263,6 @@ l_row_generation_loop: ; (huge loop!)
 
 	; read lower row
 	MOV A, r7
-	CLR C
-	RLC A
 	ANL A, #00000011b
 	MOVC A, @A+DPTR
 	ADD A, B
@@ -300,7 +271,7 @@ l_row_generation_loop: ; (huge loop!)
 	ANL A, #11111110b
 	JZ l_jump_to_post_draw ; skip drawing if amount neighbors < 2
 	MOV A, r3
-	JB A.0, l_rightmost_check_survive
+	JB A.0, l_rightmost_check_survive ; jump if living cell
 	; dead cell; check whether it will awake
 	MOV A, B
 	CJNE A, #3, l_jump_to_post_draw
@@ -308,7 +279,7 @@ l_row_generation_loop: ; (huge loop!)
 l_rightmost_check_survive:
 	MOV A, B
 	ANL A, #11111100b ; if A is not zero now, then amount neighbors > 3 (-> death)
-	JZ l_jump_to_post_draw
+	JNZ l_jump_to_post_draw
 	JMP l_draw_pixel ; dead cell with three neighbors alive
 l_jump_to_post_draw:
 	JMP l_post_draw
@@ -316,8 +287,6 @@ l_line_loop: ; (huge loop!)
 	; basically the same as in rightmost but with other constants!
 	; read upper row
 	MOV A, r7
-	CLR C
-	RLC A
 	ANL A, #00000111b
 	MOVC A, @A+DPTR
 	MOV B, A
@@ -325,17 +294,13 @@ l_line_loop: ; (huge loop!)
 	; read middle row
 	MOV PSW, #00010000b
 	MOV A, r3
-	CLR C
-	RLC A
-	ANL A, #00000101b ; we do not want to count the middle (which is the rightmost in this case because we are at the rightmost side of the board)
+	ANL A, #00000101b ; we do not want to count the middle
 	MOVC A, @A+DPTR
 	ADD A, B
 	MOV B, A
 
 	; read lower row
 	MOV A, r7
-	CLR C
-	RLC A
 	ANL A, #00000111b
 	MOVC A, @A+DPTR
 	ADD A, B
@@ -344,16 +309,16 @@ l_line_loop: ; (huge loop!)
 	ANL A, #11111110b
 	JZ l_shift_bits ; skip drawing if amount neighbors < 2
 	MOV A, r3
-	JB A.0, l_check_survive
+	JB A.1, l_check_survive
 	; dead cell; check whether it will awake
 	MOV A, B
 	CJNE A, #3, l_shift_bits
-	SJMP l_draw_pixel ; dead cell with three neighbors alive
-l_check_survive:
+	SJMP l_draw_pixel ; dead cell with three neighbors will be born (thus draw pixel)
+l_check_survive: ; check whether a living cell will survive (has at least 2 living neighbors)
 	MOV A, B
 	ANL A, #11111100b ; if A is not zero now, then amount neighbors > 3 (-> death)
-	JZ l_shift_bits
-	; dead cell with three neighbors alive
+	JNZ l_shift_bits
+	; living cell with 2 <= neighbors <= 3, survives
 
 l_draw_pixel:
 	; draw a single pixel
@@ -371,14 +336,20 @@ l_draw_pixel:
 	MOV B, A
 	MOV A, r2
 	ANL A, #00000111b
+	MOV 0x42, A
+	MOV A, #0x07
+	CLR C
+	SUBB A, 0x42
 	MOV DPTR, #l_bitmask_lookup
 	MOVC A, @A+DPTR
 	MOV r0, A
 	MOV A, B
-	CALL f_load_dptr
-	MOVX A, @DPTR
-	ORL A, r0 ; set pixel to high (bitmask is in r0)
-	MOVX @DPTR, A
+	ADD A, #0x80
+	XCH A, r0
+	MOV B, A
+	MOVX A, @R0
+	ORL A, B ; set pixel to high (bitmask is in B)
+	MOVX @R0, A
 	MOV DPTR, #l_popcount_lookup
 	MOV A, r2
 	JZ l_done_with_line ; directly quit line drawing if leftmost position
@@ -390,47 +361,47 @@ l_shift_bits:
 	; shift lowest
 	CLR C
 	MOV A, r4
-	RLC A
+	RRC A
 	MOV r4, A
 	MOV A, r5
-	RLC A
+	RRC A
 	MOV r5, A
 	MOV A, r6
-	RLC A
+	RRC A
 	MOV r6, A
 	MOV A, r7
-	RLC A
+	RRC A
 	MOV r7, A
 
 	; shift middle
 	CLR C
 	MOV A, r0
-	RLC A
+	RRC A
 	MOV r0, A
 	MOV A, r1
-	RLC A
+	RRC A
 	MOV r1, A
 	MOV A, r2
-	RLC A
+	RRC A
 	MOV r2, A
 	MOV A, r3
-	RLC A
+	RRC A
 	MOV r3, A
 
 	; shift highest
 	MOV PSW, #00001000b
 	CLR C
 	MOV A, r4
-	RLC A
+	RRC A
 	MOV r4, A
 	MOV A, r5
-	RLC A
+	RRC A
 	MOV r5, A
 	MOV A, r6
-	RLC A
+	RRC A
 	MOV r6, A
 	MOV A, r7
-	RLC A
+	RRC A
 	MOV r7, A
 
 
@@ -452,8 +423,10 @@ l_done_with_line:
 	RET
 
 l_fill_line_registers:
+	MOV r2, #31
 	MOV A, r3
 	MOV B, A
+	DEC A
 	RL A
 	RL A
 	CALL f_load_dptr
@@ -540,11 +513,33 @@ l_clear_screen_loop:
 
 
 f_draw_screen:
+	MOV P1, #0xFF
+	MOV P3, #0
+	;SETB P0.7
+	CLR P0.7
 	MOV PSW, #00011000b
 	MOV A, r7 ; we have to save the current line of the cursor
 	PUSH ACC
-	MOV r0, #0
-	MOV r2, #01111111b
+
+	; if r7 > 3 then r0 = 3; else r0 = r7
+	MOV r0, A
+	ANL A, #0xFC
+	JZ l_set_row_mask
+	MOV r0, #3
+
+l_set_row_mask:
+	MOV A, r7
+	MOV r2, #11111110b
+
+	; adjust r7 to make drawing work properly
+	; for that we set r7 -= 3
+	; if underflow (r7 >= 253) then r7 = 0
+	CLR C
+	SUBB A, #3
+	MOV r7, A
+	; if carry clear skip
+	JNB C, l_draw_screen_loop
+	MOV r7, #0
 
 l_draw_screen_loop:
 	CALL f_prepare_line
@@ -558,10 +553,9 @@ l_draw_screen_loop:
 	SETB P0.7
 	CLR P0.7
 	CPL A
-	JNB A.0, l_done_drawing
-	RR A
+	JNB A.7, l_done_drawing
+	RL A
 	MOV r2, A
-	INC r0
 	SJMP l_draw_screen_loop
 
 l_done_drawing:
@@ -585,14 +579,16 @@ l_edge_line: ; fast indexing in lookup table
 	MOV A, r6 ; read x coordinate
 	MOVC A, @A+DPTR
 	CPL A
+	INC r0
 	RET
 
 l_empty_line:
+	INC r0
 	MOV A, #0xFF
 	RET
 
 l_normal_line: ; Attention! Tedious line draw logic awaits whoever passes this label!
-	; two make it a bit easier, we split this logic again
+	; to make it a bit easier, we split this logic again
 	; there are three possibilities:
 	; 1. x value is far to the left (display edge and potentially empty pixels)
 	; 2. x value is more or less centered (display solely from board contents)
@@ -609,31 +605,27 @@ l_right_normal_line: ; we see the left edge of our board (3.)
 	CLR C
 	SUBB A, #28
 	MOV r3, A ; temporarily save that offset for indexing lookup table
-	INC A
+	CALL f_fetch_pixel
+	MOV A, r3
 	MOV r1, A
-	MOV A, #00000010b
-
-l_bitmask_right_loop:
-	DJNZ r1, l_apply_bitmasks_right_normal_line
-	RL A
-	SJMP l_bitmask_right_loop
+	INC r1
+	MOVX A, @DPTR
+	CJNE r1, #0, l_shift_pixels_left
+	SJMP l_apply_bitmasks_right_normal_line
+l_shift_pixels_left: ; shift them to the left for the border on the right
+	CLR C
+	RLC A
+	DJNZ r1, l_shift_pixels_left
 
 l_apply_bitmasks_right_normal_line:
-	DEC A
-	CPL A
-	MOV B, A
-	CALL f_fetch_pixel
-	MOV A, B
+	; let's use the lookup table to get the bits on the right (the border and empty space)
 	MOV r1, A
-	MOVX A, @DPTR
-	ANL A, r1 ; mask away unwanted bits on the right (to make some room for the stuff we get from the lookup table)
-	MOV A, r1
-	; let's use the lookup table to get the bits on the right
 	MOV DPTR, #l_normal_right_mask_lookup
 	MOV A, r3 ; get the offset back
 	MOVC A, @A+DPTR
 	ORL A, r1 ; merge both parts
-
+	MOV DPTR, #l_reverse_bits_lookup_table
+	MOVC A, @A+DPTR
 	AJMP l_ret_from_normal_line
 
 l_left_normal_line: ; we see the left edge of our board (1.)
@@ -656,9 +648,16 @@ l_shift_right_loop:
 
 l_shift_right_loop_end:
 	ORL A, r3 ; mask in bits we retrieved from lookup table
+	MOV DPTR, #l_reverse_bits_lookup_table
+	MOVC A, @A+DPTR ; reverse bits in A
 	AJMP l_ret_from_normal_line
 
 l_centered_normal_line: ; we are somewhere centered on the board
+	MOV A, r6
+	PUSH ACC
+	CLR C
+	SUBB A, #0x03
+	MOV r6, A
 	CALL f_fetch_pixel
 	MOVX A, @DPTR
 	MOV B, A
@@ -667,27 +666,29 @@ l_centered_normal_line: ; we are somewhere centered on the board
 	MOV r1, A
 	MOV A, r6 ; get x position to know the amount of times to shift
 	ANL A, #00000111b
-	INC A
 	MOV r3, A
 	MOV A, r1
-	XCH A, B
+	CJNE r3, #0, l_centered_line_shift_loop
+	SJMP l_prepared_centered_normal_line
 	; A contains pixels at location k+1 while B contains pixels at location k
 	; we will shift apropriately over both registers
 l_centered_line_shift_loop:
-	DJNZ r3, l_prepared_centered_normal_line
 	; no need for CLR C because rightmost contents of A (k+1) will be trashed anyways
 	RLC A
 	XCH A, B
 	RLC A ; shift leftmost bit (in Carry) from (k+1) in k
 	XCH A, B
-	SJMP l_centered_line_shift_loop
+	DJNZ r3, l_centered_line_shift_loop
 
 l_prepared_centered_normal_line:
+	POP ACC
+	MOV r6, A
 	XCH A, B ; we need contents of B into A
+	MOV DPTR, #l_reverse_bits_lookup_table
+	MOVC A, @A+DPTR
 
 l_ret_from_normal_line:
 	INC r7 ; normal line means that we have to increment our line counter (we need that because of f_fetch_pixel)
-	DEC r0 ; if we INC r7, we have to DEC r0 to stay consistent as r0+r7 is used for determining the line state
 	CPL A
 	RET
 
@@ -704,6 +705,7 @@ f_fetch_pixel:
 	RL A
 	SWAP A
 	ORL A, r1 ; now A is correct offset
+	SETB ACC.7
 	; no RET because it just flows right into f_load_dptr
 
 ; reg A is offset to some memory location in external ram (pointing to an board byte)

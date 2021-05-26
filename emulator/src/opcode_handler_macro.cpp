@@ -189,6 +189,7 @@ void OpcodeHandler::JNB()
 
 void OpcodeHandler::JNC()
 {
+  DBG_P_CODE_ADDR()
   CONDITIONAL_REL_JUMP(GET_CARRY_NO_SHIFT() == 0)
 }
 
@@ -225,6 +226,7 @@ void OpcodeHandler::MOV(uint8_t* dest, uint8_t val)
 
 void OpcodeHandler::MOV_to_C()
 {
+  DBG_P_BA()
   const fuint32_t byte = READ_BYTE_PC();
   CARRY_CONDITIONAL(CHECK_BIT_ADDRESSABLE_SET(byte) != 0)
 }
@@ -274,14 +276,15 @@ void OpcodeHandler::ORL_C(bool cpl)
 void OpcodeHandler::POP()
 {
   DBG_SINGLE_DATA_ADDR()
-  uint8_t* addr = READ_ADDRESS_1B();
-  *addr = POP_FROM_STACK();
+  RD_ADDRESS()
+  *GET_DATA_ADDRESS() = POP_FROM_STACK();
 }
 
 void OpcodeHandler::PUSH()
 {
   DBG_SINGLE_DATA_ADDR()
-  WRITE_STACK(*READ_ADDRESS_1B());
+  RD_ADDRESS()
+  WRITE_STACK(*GET_DATA_ADDRESS());
 }
 
 void OpcodeHandler::RET()
@@ -297,14 +300,14 @@ void OpcodeHandler::RETI()
 
 void OpcodeHandler::RL()
 {
-  *A_REG = (*A_REG << 1) | (*A_REG >> 7);
+  *A_REG = ((*A_REG << 1) | (*A_REG >> 7));
 }
 
 void OpcodeHandler::RLC()
 {
   uint8_t c = GET_CARRY();
-  CARRY_CONDITIONAL(*A_REG >> 7)
-  *A_REG = (*A_REG << 1) | c;
+  CARRY_CONDITIONAL(((*A_REG) & 0x80) != 0)
+  *A_REG = ((*A_REG << 1) | c);
 }
 
 void OpcodeHandler::RR()
@@ -315,8 +318,8 @@ void OpcodeHandler::RR()
 void OpcodeHandler::RRC()
 {
   uint8_t c = GET_CARRY();
-  CARRY_CONDITIONAL(*A_REG & 0x01)
-  *A_REG = (*A_REG >> 1) | GET_CARRY_NO_SHIFT();
+  CARRY_CONDITIONAL(((*A_REG) & 0x01))
+  *A_REG = ((*A_REG >> 1) | (c << 7));
 }
 
 void OpcodeHandler::SETB_C()

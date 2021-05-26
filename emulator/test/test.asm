@@ -1,9 +1,9 @@
 cseg at 0h
 CLR P0.7
-ajmp l_test
+ajmp l_test_button
 cseg at 30h
 mov A, #88
-JMP l_test
+JMP l_test_button
 
 cseg at 100h
 l_init:
@@ -83,6 +83,24 @@ CJNE R0, #10, l_fibo_iter
 MOVX A, @R1
 XCH A, B
 MOVX A, @R0
+
+l_test_button:
+MOV A, #3
+CLR C
+SUBB A, #3
+MOV P0, #0
+l_button:
+MOV A, P0
+MOV P1, P0
+MOV P3, P0
+SETB P0.7
+NOP
+NOP
+CLR P0.7
+
+l_stop_loop:
+NOP
+SJMP l_button
 
 l_test:
 ; useless test for the emulator's debugger (testing correct output)

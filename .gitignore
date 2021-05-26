@@ -15,6 +15,7 @@ cpp/jp_table_gen
 .vscode/*
 emulator/gui/build/*
 emulator/LEDMatrix
+emulator/test/Roulette*
 
 # Prerequisites
 *.d
