@@ -1,3 +1,4 @@
 # MCU 8051 IDE: Virtual HW configuration file
 # Project: game_of_life
 
+LedMatrix {{C5 3 C6 3 C7 3 R0 1 R1 1 R2 1 R3 1 R4 1 R5 1 R6 1 R7 1 C0 3 C1 3 C2 3 C3 3 C4 3} {C5 2 C6 1 C7 0 R0 7 R1 6 R2 5 R3 4 R4 3 R5 2 R6 1 R7 0 C0 7 C1 6 C2 5 C3 4 C4 3} 280x295+1974+121 {} red 50 {0 0} 0 0}

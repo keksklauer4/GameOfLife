@@ -130,7 +130,7 @@ db 00011111b, 10011111b, 01011111b, 11011111b, 00111111b, 10111111b, 01111111b, 
 
 l_selection_jump_table:
 	; 0.
-	MOV DPTR, #l_glider
+	MOV DPTR, #l_test_sym
 	RET
 	NOP
 	
@@ -150,6 +150,9 @@ l_selection_jump_table:
 	NOP
 	
 
+l_test_sym:
+db 1h
+db 2h, 0h, 10111101b
 
 ; selection
 l_glider:

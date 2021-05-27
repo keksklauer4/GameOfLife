@@ -268,6 +268,7 @@ l_copy_loop:
 	CLR A
 	MOVC A, @A+DPTR
 	MOVX @R0, A ; write byte
+	INC DPTR
 
 	DJNZ r1, l_copy_loop
 
@@ -783,41 +784,11 @@ f_fetch_pixel:
 	SETB ACC.7
 	; no RET because it just flows right into f_load_dptr
 
-; reg A is offset to some memory location in external ram (pointing to an board byte)
-; routine sets DPTR to correct byte location (in at most 3 jumps, 1 ret and 3 MOV(X)s, some arithmetics)
-; -> much faster than INC DPTR in a loop!
 f_load_dptr:
-	JB A.7, l_1x_bit
-	JB A.6, l_01_bit
-l_00_bit:
-	MOV DPTR, #l_jp_table + 0 * 256
-	RL A
-	RL A
-	JMP @A+DPTR
-l_01_bit:
-	MOV DPTR, #l_jp_table + 1 * 256
-	RL A
-	CLR C
-	RLC A ; one byte shorter than ANL A, #3Fh -> RL -> RL
-	JMP @A+DPTR
+	MOV DPL, A
+	MOV DPH, #0
+	RET
 
-l_1x_bit:
-	JB A.6, l_11_bit
-l_10_bit:
-	MOV DPTR, #l_jp_table + 2 * 256
-	CLR C
-	RLC A
-	RL A
-	JMP @A+DPTR
-l_11_bit:
-	MOV DPTR, #l_jp_table + 3 * 256
-	ANL A, #3Fh
-	RL A
-	RL A
-	JMP @A+DPTR
-	; no RET needed!
-
-INCLUDE "../cpp/jp_table.asm"
 INCLUDE "lookup_tables.asm"
 
 END
