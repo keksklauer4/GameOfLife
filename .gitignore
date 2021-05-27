@@ -7,7 +7,6 @@ cpp/jp_table_gen
 *.hex~
 *.lst
 *.lst~
-*.bin
 *.bin~
 *.mcu8051ide~
 *.inc~

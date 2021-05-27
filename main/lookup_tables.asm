@@ -128,88 +128,118 @@ db 00010111b, 10010111b, 01010111b, 11010111b, 00110111b, 10110111b, 01110111b, 
 db 00001111b, 10001111b, 01001111b, 11001111b, 00101111b, 10101111b, 01101111b, 11101111b
 db 00011111b, 10011111b, 01011111b, 11011111b, 00111111b, 10111111b, 01111111b, 11111111b
 
+
+; patterns for the inserting
+; New patterns can easily be added by adding a block below in the form:
+	; x.
+	; MOV DPTR, #l_my_new_pattern ; adjust this to the correct pattern name
+	; RET
+; Then add another label that contains the pattern data (see below for explanation)
 l_selection_jump_table:
 	; 0.
-	MOV DPTR, #l_test_sym
+	MOV DPTR, #l_big_oscillator
 	RET
-	NOP
-	
+
 	; 1.
 	MOV DPTR, #T_nosed_p6
 	RET
-	NOP
-	
+
 	; 2.
 	MOV DPTR, #l_LWSS
 	RET
-	NOP
-	
+
 	; 3.
 	MOV DPTR, #l_glider
 	RET
-	NOP
-	
 
-l_test_sym:
-db 1h
-db 2h, 0h, 10111101b
 
-; selection
+
+; selection for patterns
+; Add a new pattern by first writing
+; db <amount of bytes to write>
+; 		then for each byte of the pattern add
+; db <row>, <col>, <byte of your pattern>
+;
+; Note that row must be 0 <= row <= 31
+; and col must be divisible by 8 and 0 <= col <= 24
+; 	col can therefore only have values 0, 8, 16 or 24
+
+
+; pattern for a bug oscillator (src: https://upload.wikimedia.org/wikipedia/commons/9/94/JdlV_osc_3.100.gif)
+l_big_oscillator:
+	db 10h ; 10h = 16 in decimal. 16 because 16 bytes to draw will follow (each with row, col and the actual pattern byte)
+	db 2h, 0h, 00000011b
+	db 2h, 8h, 11000000b
+	db 3h, 0h, 00000010b
+	db 3h, 8h, 01000000b
+	db 4h, 0h, 00001110b
+	db 4h, 8h, 01110000b
+	db 5h, 0h, 00001000b
+	db 5h, 8h, 00010000b
+	db 6h, 0h, 00001000b
+	db 6h, 8h, 00010000b
+	db 7h, 0h, 00001110b
+	db 7h, 8h, 01110000b
+	db 8h, 0h, 00000010b
+	db 8h, 8h, 01000000b
+	db 9h, 0h, 00000011b
+	db 9h, 8h, 11000000b
+
 l_glider:
-db 3h
-db 3h, 8h, 11100000b
-db 4h, 8h, 10000000b
-db 5h, 8h, 01000000b
+db 3h ; 3 bytes will be written (the three rows below)
+db 3h, 8h, 00000010b
+db 4h, 8h, 00000001b
+db 5h, 8h, 00000111b
 
 T_nosed_p6:
 db 21h
-db 3h, 8h, 11000000b 
-db 3h, 16h, 00011000b 
+db 3h, 8h, 11000000b
+db 3h, 16h, 00011000b
 db 3h, 24h, 00000000b
 
-db 4h, 8h, 01000000b 
-db 4h, 16h, 10101000b 
+db 4h, 8h, 01000000b
+db 4h, 16h, 10101000b
 db 4h, 24h, 00000000b
 
-db 5h, 8h, 00000001b 
-db 5h, 16h, 00010000b 
+db 5h, 8h, 00000001b
+db 5h, 16h, 00010000b
 db 5h, 24h, 00000000b
 
-db 6h, 8h, 00000000b 
-db 6h, 16h, 00000000b 
+db 6h, 8h, 00000000b
+db 6h, 16h, 00000000b
 db 6h, 24h, 00000000b
 
-db 7h, 8h, 00101010b 
-db 7h, 16h, 00001010b 
+db 7h, 8h, 00101010b
+db 7h, 16h, 00001010b
 db 7h, 24h, 10000000b
 
-db 8h, 8h, 11101011b 
-db 8h, 16h, 00011010b 
+db 8h, 8h, 11101011b
+db 8h, 16h, 00011010b
 db 8h, 24h, 11100000b
 
-db 9h, 8h, 00101010b 
-db 9h, 16h, 00001010b 
+db 9h, 8h, 00101010b
+db 9h, 16h, 00001010b
 db 9h, 24h, 10000000b
 
-db 10h, 8h, 00000000b 
-db 10h, 16h, 00000000b 
+db 10h, 8h, 00000000b
+db 10h, 16h, 00000000b
 db 10h, 24h, 00000000b
 
-db 11h, 8h, 00000001b 
-db 11h, 16h, 00010000b 
+db 11h, 8h, 00000001b
+db 11h, 16h, 00010000b
 db 11h, 24h, 0000000b
 
-db 12h, 8h, 00000010b 
-db 12h, 16h, 10101000b 
+db 12h, 8h, 00000010b
+db 12h, 16h, 10101000b
 db 12h, 24h, 00000000b
 
-db 13h, 8h, 00000011b 
-db 13h, 16h, 00011000b 
+db 13h, 8h, 00000011b
+db 13h, 16h, 00011000b
 db 13h, 24h, 00000000b
 
 l_LWSS:
 db 4h
-db 10h, 16h, 00100100b 
+db 10h, 16h, 00100100b
 db 11h, 16h, 01000000b
 db 12h, 16h, 01000100b
 db 13h, 16h, 01111000b
