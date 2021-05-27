@@ -21,11 +21,12 @@ jobs:
         
     - name: Build emulator
       run: |
-        cd emulator
+        cd emulator/
         make
     - name: Build GUI
       run: |
         cd emulator/gui/
         mkdir build
+        cd build/
         qmake ..
         make
