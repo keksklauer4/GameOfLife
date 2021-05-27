@@ -27,12 +27,12 @@ The above mentioned numbers button mappings (```button 0``` for up etc.) are int
 Shortly after releasing ```button 6```, the button/key mappings will again be interpreted as explained above. Therefore, the user should quickly release the other buttons as well.
 
 !!! Important !!!:
-Currently, there are only ```4``` patterns defined in the [table](https://github.com/keksklauer4/GameOfLife/blob/master/main/lookup_tables.asm#L132) which implies that if a higher selection index is chosen, the game will crash! Regardless of that, in (lookup_tables.asm](https://github.com/keksklauer4/GameOfLife/blob/master/main/lookup_tables.asm) one can find an explanation to add more patterns.
+Currently, there are only ```4``` patterns defined in the [table](https://github.com/keksklauer4/GameOfLife/blob/master/main/lookup_tables.asm#L132) which implies that if a higher selection index is chosen, the game will crash! Regardless of that, in [lookup_tables.asm](https://github.com/keksklauer4/GameOfLife/blob/master/main/lookup_tables.asm) one can find an explanation to add more patterns.
 
 ## GUI
 Due to the fact that we are really do not like creating UIs, it does not look optimal... But who cares anyway!
 
-![Emulator running GameOfLife with a classical Glider drawn.](https://raw.githubusercontent.com/keksklauer4/GameOfLife/blob/master/img/example.png)
+![Emulator running GameOfLife with a classical Glider drawn.](https://github.com/keksklauer4/GameOfLife/blob/master/img/example.png)
 
 And here you can see pattern with selection index 0 copied (it is a nice oscillating pattern!).
-![Emulator running GameOfLife with pattern 0 copied onto the screen.](https://raw.githubusercontent.com/keksklauer4/GameOfLife/blob/master/img/pattern0.png)
+![Emulator running GameOfLife with pattern 0 copied onto the screen.](https://github.com/keksklauer4/GameOfLife/blob/master/img/pattern0.png)
