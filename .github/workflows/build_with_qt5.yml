@@ -25,7 +25,7 @@ jobs:
         make
     - name: Build GUI
       run: |
-        cd gui/
+        cd emulator/gui/
         mkdir build
         qmake ..
         make
