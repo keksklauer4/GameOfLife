@@ -13,16 +13,19 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Install Qt
+    - name: Install Qt5
       uses: jurplel/install-qt-action@v2
-
+      with:
+        version: '5.15.2'
+        host: 'linux'
+        
     - name: Build emulator
       run: |
         cd emulator
         make
     - name: Build GUI
       run: |
-        cd emulator/gui
+        cd gui/
         mkdir build
         qmake ..
         make
