@@ -113,7 +113,47 @@ namespace testing
     }
 
   CREATE_FLAG_CHECK(Carry, PSW_OFFSET, 7);
+  CREATE_FLAG_CHECK(AUX, PSW_OFFSET, 6);
+  CREATE_FLAG_CHECK(Overflow, PSW_OFFSET, 2);
+  CREATE_FLAG_CHECK(Parity, PSW_OFFSET, 0);
+  CREATE_FLAG_CHECK(IDLE, PCON_OFFSET, 0);
+  CREATE_FLAG_CHECK(PowerDown, PCON_OFFSET, 1);
 
+  template<bool negated = false>
+  class BitMaskCondition : public TestCondition
+  {
+  public:
+    BitMaskCondition(uint16_t address, uint8_t mask, uint8_t expected, MemoryType type)
+      : m_mask(mask), m_address(address), m_type(type), m_expected(expected) {}
+    void execute(state_t& state) override
+    {
+      auto val = (helper::fetchFromAddress(state, m_address, m_type));
+      ASSERT_TRUE( ((negated ? ~val : val) & m_mask) != m_expected);
+    }
+  private:
+    uint16_t m_address;
+    uint8_t m_mask;
+    uint8_t m_expected;
+    MemoryType m_type;
+  };
+
+  typedef BitMaskCondition<false> BitMaskCheck;
+  typedef BitMaskCondition<true>  NegatedBitMaskCheck;
+
+  class StackContains : public TestCondition
+  {
+  public:
+    StackContains(uint8_t offset, uint8_t expected)
+      : m_offset(offset), m_expected(expected) {}
+    void execute(state_t& state) override
+    {
+      ASSERT_EQ(helper::fetchFromAddress(state, ((uint8_t)((*state.regs.SP) - m_offset)), INTERNAL), m_expected);
+    }  
+  
+  private:
+    uint8_t m_offset;
+    uint8_t m_expected;
+  };
 }
 }
 

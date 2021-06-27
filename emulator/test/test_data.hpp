@@ -65,6 +65,16 @@ static std::vector<std::pair<std::string, std::string>> data
     LINE("mov b, #7")
     LINE("mul ab")
     JUMP_END()
+  ),
+  TEST_DATA(
+    "test_stack",
+    LINE("mov a, #100")
+    LINE("push acc")
+    LINE("inc a")
+    LINE("push acc")
+    LINE("inc a")
+    LINE("push acc")
+    JUMP_END()
   )
 };
 
@@ -100,6 +110,12 @@ inline std::vector<test_config_t> create_test_conditions()
   CREATE_TEST("test_djnz");
   ADD_COND(RegisterContains, 0, 0);
   ADD_COND(RegisterContains, 2, 99);
+
+  CREATE_TEST("test_stack");
+  ADD_COND(MemoryContains, A_OFFSET, 102, SFR);
+  ADD_COND(StackContains, 0, 102);
+  ADD_COND(StackContains, 1, 101);
+  ADD_COND(StackContains, 2, 100);
   
 
   return tests;
