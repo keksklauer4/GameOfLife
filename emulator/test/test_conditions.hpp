@@ -92,6 +92,27 @@ namespace testing
       MemoryType m_type;
   };
 
+  class FlagCheck : public TestCondition
+  {
+    public:
+      void execute(state_t& state) override
+      {
+        ASSERT_TRUE((getFlagSetting(state) != 0) == m_expected);
+      }
+      virtual bool getFlagSetting(state_t& state) = 0;
+    protected:
+      bool m_expected;
+  };
+
+  #define CREATE_FLAG_CHECK(Flag, addr_offset, bit_offset)  \
+    class Flag##FlagCheck : public FlagCheck                \
+    {                                                       \
+    public:                                                 \
+      Flag##FlagCheck(bool expected){ this->m_expected = expected; } \
+      bool getFlagSetting(state_t& state) override { return (*(state.sfr_memory + addr_offset)) >> bit_offset; }  \
+    }
+
+  CREATE_FLAG_CHECK(Carry, PSW_OFFSET, 7);
 
 }
 }

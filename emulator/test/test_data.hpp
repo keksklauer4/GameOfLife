@@ -24,8 +24,8 @@ static std::vector<std::pair<std::string, std::string>> data
 {
   TEST_DATA(
     "test_add",
-    LINE("mov a, #25")
-    LINE("mov b, #45")
+    LINE("mov a, #2")
+    LINE("mov b, #255")
     LINE("add a, b")
     JUMP_END()
   ),
@@ -42,6 +42,29 @@ static std::vector<std::pair<std::string, std::string>> data
     LINE("push p0")
     LINE("pop b")
     JUMP_END()
+  ),
+  TEST_DATA(
+    "test_djnz",
+    LINE("mov r0, #1")
+    LINE("mov r2, #99")
+    LINE("djnz r0, l_jumpWrong")
+    LINE("ljmp l_breakpoint")
+    LINE("l_jumpWrong:")
+    LINE("mov r2, #100")
+  ),
+  TEST_DATA(
+    "test_div",
+    LINE("mov a, #50")
+    LINE("mov b, #7")
+    LINE("div ab")
+    JUMP_END()
+  ),
+  TEST_DATA(
+    "test_mul",
+    LINE("mov a, #6")
+    LINE("mov b, #7")
+    LINE("mul ab")
+    JUMP_END()
   )
 };
 
@@ -52,8 +75,9 @@ inline std::vector<test_config_t> create_test_conditions()
   std::vector<test_config_t> tests{};
   test_config_t* test;
   CREATE_TEST("test_add");
-  ADD_COND(MemoryContains, A_OFFSET, 70, SFR);
-  ADD_COND(MemoryContains, B_OFFSET, 45, SFR);
+  ADD_COND(MemoryContains, A_OFFSET, 1, SFR);
+  ADD_COND(MemoryContains, B_OFFSET, 255, SFR);
+  ADD_COND(CarryFlagCheck, true);
 
   CREATE_TEST("test_sub");
   ADD_COND(RegisterContains, 2, 25);
@@ -65,6 +89,17 @@ inline std::vector<test_config_t> create_test_conditions()
   ADD_COND(MemoryContains, B_OFFSET, 10, SFR);
 
   
+  CREATE_TEST("test_div");
+  ADD_COND(MemoryContains, A_OFFSET, 7, SFR);
+  ADD_COND(MemoryContains, B_OFFSET, 1, SFR);
+
+  CREATE_TEST("test_mul");
+  ADD_COND(MemoryContains, A_OFFSET, 42, SFR);
+  ADD_COND(MemoryContains, B_OFFSET, 0, SFR);
+
+  CREATE_TEST("test_djnz");
+  ADD_COND(RegisterContains, 0, 0);
+  ADD_COND(RegisterContains, 2, 99);
   
 
   return tests;
