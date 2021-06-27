@@ -13,7 +13,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: make
+    - name: Test emulator
       run: |
+        sudo apt install as31
         cd emulator
-        make
+        bash test.sh

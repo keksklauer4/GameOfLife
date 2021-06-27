@@ -19,14 +19,7 @@ jobs:
         version: '5.15.2'
         host: 'linux'
         
-    - name: Build emulator
+    - name: Build emulator and GUI
       run: |
         cd emulator/
-        make
-    - name: Build GUI
-      run: |
-        cd emulator/gui/
-        mkdir build
-        cd build/
-        qmake ..
-        make
+        bash build_all.sh

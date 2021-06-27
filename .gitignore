@@ -15,6 +15,10 @@ cpp/jp_table_gen
 emulator/gui/build/*
 emulator/LEDMatrix
 emulator/test/Roulette*
+emulator/build/*
+emulator/test/data/*.asm
+emulator/test/data/*.bin
+emulator/test/gen_test_data
 
 # Prerequisites
 *.d
