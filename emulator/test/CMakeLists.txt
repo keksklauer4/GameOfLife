@@ -1,20 +1,20 @@
 cmake_minimum_required(VERSION 3.5)
-project(Dirty8051EmulatorTesting)
+project(8051EmulatorTest)
 
-add_executable(Dirty8051EmulatorTesting
+add_executable(8051EmulatorTest
     emulator_testing.cpp
     test_main.cpp
 )
 
-target_link_libraries(Dirty8051EmulatorTesting PRIVATE
-    Dirty8051EmulatorStatic
+target_link_libraries(8051EmulatorTest PRIVATE
+    8051EmulatorStatic
     GTest::GTest
     GTest::Main
 )
 
 file(COPY data DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
-add_test(test_all Dirty8051EmulatorTesting)
+add_test(test_all 8051EmulatorTest)
 
 add_executable(gen_test_data
     gen_test_data.cpp

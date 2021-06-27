@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0)
-project(Dirty8051Emulator)
+project(8051Emulator)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CXX_STANDARD_REQUIRED ON)
