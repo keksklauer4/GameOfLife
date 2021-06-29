@@ -19,7 +19,7 @@ namespace emu
 {
 namespace testing
 {
-  
+
 static std::vector<std::pair<std::string, std::string>> data
 {
   TEST_DATA(
@@ -98,7 +98,7 @@ inline std::vector<test_config_t> create_test_conditions()
   ADD_COND(MemoryContains, P0_OFFSET, 10, SFR);
   ADD_COND(MemoryContains, B_OFFSET, 10, SFR);
 
-  
+
   CREATE_TEST("test_div");
   ADD_COND(MemoryContains, A_OFFSET, 7, SFR);
   ADD_COND(MemoryContains, B_OFFSET, 1, SFR);
@@ -116,7 +116,7 @@ inline std::vector<test_config_t> create_test_conditions()
   ADD_COND(StackContains, 0, 102);
   ADD_COND(StackContains, 1, 101);
   ADD_COND(StackContains, 2, 100);
-  
+
 
   return tests;
 }

@@ -46,7 +46,6 @@ class LEDHandler
         changeMask <<= 8;
         rowSelect >>= 1;
       }
-      //std::cout << "Screen " << screen  << " Mask " << static_cast<uint32_t>(rowSelectMask) << " Col " << static_cast<uint32_t>(colSetting) << std::endl;
 
       m_leds.beginCellModification();
       m_leds.setScreen(screen);
