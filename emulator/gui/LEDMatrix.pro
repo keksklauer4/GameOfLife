@@ -11,7 +11,8 @@ CONFIG += c++11
 SOURCES += \
     LEDWidget.cpp \
     main.cpp \
-    mainwindow.cpp
+    mainwindow.cpp \
+    emulator_integration.cpp
 
 HEADERS += \
     LEDWidget.h \

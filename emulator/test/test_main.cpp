@@ -36,3 +36,8 @@ TEST(DJNZ, InstructionTest)
 {
   run_emulator_breakpoint(test_data.at(5), BREAK_ADDRESS, 300);
 }
+
+TEST(STACK, InstructionTest)
+{
+  run_emulator_breakpoint(test_data.at(6), BREAK_ADDRESS, 300);
+}

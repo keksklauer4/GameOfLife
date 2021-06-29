@@ -12,7 +12,7 @@ namespace emu
 {
 namespace testing
 {
-  
+
   typedef struct TestSetting
   {
     TestSetting(std::string f): filename(f) {}
