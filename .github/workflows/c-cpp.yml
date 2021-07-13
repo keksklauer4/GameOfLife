@@ -2,9 +2,9 @@ name: C/C++ CI
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, develop ]
   pull_request:
-    branches: [ master ]
+    branches: [ master, develop ]
 
 jobs:
   build:
@@ -13,7 +13,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: make
+    - name: Test emulator
       run: |
+        sudo apt install as31
         cd emulator
-        make
+        bash test.sh
